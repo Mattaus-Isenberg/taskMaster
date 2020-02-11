@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class addTask extends AppCompatActivity {
 
@@ -17,6 +18,9 @@ public class addTask extends AppCompatActivity {
         add_Task.setOnClickListener( (e)-> {
             TextView item = findViewById(R.id.label);
             item.setText("Submitted!");
+            
+            Toast toast = Toast.makeText(getApplicationContext(), "Submitted!", Toast.LENGTH_LONG);
+            toast.show();
         });
     }
 }
