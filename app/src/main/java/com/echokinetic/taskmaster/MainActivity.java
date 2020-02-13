@@ -1,6 +1,10 @@
 package com.echokinetic.taskmaster;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -11,13 +15,49 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity {
+import com.echokinetic.taskmaster.dummy.MyTaskRecyclerViewAdapter;
+import com.echokinetic.taskmaster.dummy.TaskFragment.OnListFragmentInteractionListener;
+import com.echokinetic.taskmaster.dummy.TaskFragment;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+
+public class MainActivity extends AppCompatActivity
+{
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
+        recyclerView.setHasFixedSize(true);
+
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(layoutManager);
+
+        //Adapter
+        Task taskOne = new Task("Code Challenge 27", "Complete code challenge, im+plement java code, create blog", "new");
+        Task taskTwo = new Task("Gym", "Back and Triceps, do cardio, add 30 minutes of after rowing", "assigned");
+        Task taskThree = new Task("Sleep", "Try to sleep enough, eat well, remain fit", "inProgress");
+        Task taskFour = new Task("Lab", "Complete lab and implement recycler view", "Complete");
+        List<Task> taskList = new LinkedList<>();
+
+        taskList.add(taskOne);
+        taskList.add(taskTwo);
+        taskList.add(taskThree);
+        taskList.add(taskFour);
+
+        TaskFragment.OnListFragmentInteractionListener mListener;
+
+        MyTaskRecyclerViewAdapter adapter = new MyTaskRecyclerViewAdapter(taskList, this, null);
+        recyclerView.setAdapter(adapter);
+
 
         Button add_Button = findViewById(R.id.newTask);
         add_Button.setOnClickListener( (e)-> {

@@ -2,8 +2,8 @@
 
 ## Day One Tasks
 
-- Create home page - View contains a text view, image view and 2 buttons, one button navigates to add a task view and the other to all tasks.
-![Home Page](screenshots/Screenshot_1581535787.png)
+- Create home page - View contains a text view, recycler view and 2 buttons, one button navigates to add a task view and the other to all tasks.
+![Home Page](screenshots/RecyclerImplemented.png)
 
 - Add a Task - Contains a button to add tasks and 2 text fields, 1 for the title of a task another for the description
 ![Add Task](screenshots/Screenshot_1581450778.png)
@@ -14,7 +14,6 @@
 - Task Detail - Contains an EditText view as well as MultiLine view. 
 ![Task Detail](screenshots/Screenshot_1581535827.png)
 
-Completed day two tasks
+Completed day three tasks
 
--Detail page created, populates title from text contained in button.
--Settings page created, has EditText and button, saving changes Main page to show username saved.
+-Implemented recycler view, adding tasks in main as well as clicking even handling and passing of information.
