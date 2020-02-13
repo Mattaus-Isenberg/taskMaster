@@ -15,37 +15,26 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.0" />
 
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="287dp"
-        android:layout_height="292dp"
-        android:src="@android:color/background_light"
-        app:layout_constraintBottom_toBottomOf="@+id/view"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.416" />
-
     <Button
         android:id="@+id/newTask"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="60dp"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="24dp"
         android:text="Add Task"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageView" />
+        app:layout_constraintTop_toBottomOf="@+id/recyclerView" />
 
     <Button
         android:id="@+id/allTasks"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="24dp"
         android:text="All Tasks"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.624"
         app:layout_constraintStart_toEndOf="@+id/newTask"
-        app:layout_constraintTop_toBottomOf="@+id/imageView" />
+        app:layout_constraintTop_toBottomOf="@+id/recyclerView" />
 
     <TextView
         android:id="@+id/mainTitle"
@@ -54,7 +43,6 @@
         android:layout_marginTop="32dp"
         android:text="My Tasks"
         android:textSize="30sp"
-        app:layout_constraintBottom_toTopOf="@+id/imageView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/view" />
@@ -95,9 +83,21 @@
         android:id="@+id/settingsButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/right_Button"
         app:srcCompat="@android:drawable/ic_menu_preferences" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="396dp"
+        android:layout_height="392dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.466"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/mainTitle" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -17,7 +17,15 @@ public class detailPage extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         TextView title = findViewById(R.id.title);
-        String titleTask = getIntent().getStringExtra("taskTitle");
+        TextView description = findViewById(R.id.description);
+        TextView state = findViewById(R.id.state);
+        String titleTask = getIntent().getStringExtra("title");
+        String bodyTask = getIntent().getStringExtra("description");
+        String stateTask = getIntent().getStringExtra("state");
+
         title.setText(titleTask);
+        description.setText(bodyTask);
+        state.setText(stateTask);
+
     }
 }
