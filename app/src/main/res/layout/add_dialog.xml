@@ -1,44 +1,17 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".detailPage">
+    android:orientation="vertical">
 
-    <EditText
-        android:id="@+id/description"
-        android:layout_width="326dp"
-        android:layout_height="456dp"
-        android:layout_marginTop="16dp"
-        android:ems="10"
-        android:gravity="start|top"
-        android:inputType="textMultiLine"
-        android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
-        android:textAppearance="@style/TextAppearance.AppCompat.Large"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.494"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/state_Change" />
-
-    <TextView
-        android:id="@+id/title"
-        android:layout_width="321dp"
-        android:layout_height="58dp"
-        android:layout_marginTop="44dp"
-        android:text="Title "
-        android:textAlignment="center"
-        android:textAppearance="@style/TextAppearance.AppCompat.Display2"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.chip.ChipGroup
-        android:id="@+id/state_Change"
-        android:layout_width="344dp"
-        android:layout_height="70dp"
-        android:layout_marginTop="16dp"
+        android:id="@+id/dialog_state"
+        android:layout_width="381dp"
+        android:layout_height="53dp"
+        android:layout_marginTop="24dp"
+        android:textAlignment="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/title"
@@ -49,6 +22,7 @@
             style="@style/Widget.MaterialComponents.Chip.Choice"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
             android:text="New"
             android:theme="@style/Theme.MaterialComponents.Light"
             app:checkedIcon="@android:color/holo_green_dark"
@@ -85,13 +59,34 @@
             app:chipBackgroundColor="@color/bg_chip_state_list" />
     </com.google.android.material.chip.ChipGroup>
 
-    <ImageButton
-        android:id="@+id/delete_FromDB"
-        android:layout_width="42dp"
-        android:layout_height="39dp"
-        android:layout_marginTop="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/state_Change"
-        app:srcCompat="@android:drawable/ic_menu_delete" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <EditText
+        android:id="@+id/dialog_Title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="4dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginRight="4dp"
+        android:layout_marginBottom="4dp"
+        android:hint="Title"
+        android:inputType="textAutoCorrect" />
+
+    <EditText
+        android:id="@+id/dialog_Body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="4dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginRight="4dp"
+        android:layout_marginBottom="16dp"
+        android:fontFamily="sans-serif"
+        android:hint="Description"
+        android:inputType="textAutoCorrect" />
+
+    <TextView
+        android:id="@+id/dialog_Count"
+        android:layout_width="383dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:text="Total Tasks: " />
+
+</LinearLayout>

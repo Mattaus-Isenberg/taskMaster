@@ -7,7 +7,7 @@
     tools:context=".settings">
 
     <EditText
-        android:id="@+id/username"
+        android:id="@+id/add_Title"
         android:layout_width="277dp"
         android:layout_height="52dp"
         android:layout_marginTop="80dp"
@@ -26,5 +26,5 @@
         android:text="Save"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/username" />
+        app:layout_constraintTop_toBottomOf="@+id/add_Title" />
 </androidx.constraintlayout.widget.ConstraintLayout>

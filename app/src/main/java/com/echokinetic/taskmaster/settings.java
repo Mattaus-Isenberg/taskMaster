@@ -8,9 +8,6 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
-
-import java.util.function.Predicate;
 
 public class settings extends AppCompatActivity {
 
@@ -25,7 +22,7 @@ public class settings extends AppCompatActivity {
 
         Button save_Button = findViewById(R.id.usernameSave);
         save_Button.setOnClickListener( (e)-> {
-            EditText usernameField = findViewById(R.id.username);
+            EditText usernameField = findViewById(R.id.add_Title);
             String usernameContent = usernameField.getText().toString();
             editor.putString("user", usernameContent);
             editor.apply();

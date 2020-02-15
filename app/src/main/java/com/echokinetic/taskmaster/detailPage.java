@@ -3,9 +3,11 @@ package com.echokinetic.taskmaster;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.room.Room;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,6 +37,15 @@ public class detailPage extends AppCompatActivity {
         String bodyTask = getIntent().getStringExtra("description");
         String stateTask = getIntent().getStringExtra("state");
         long id = getIntent().getLongExtra("ID", 0);
+
+        ImageButton delete = findViewById(R.id.delete_FromDB);
+        delete.setOnClickListener( (e)->
+        {
+            Intent intent = new Intent(this, MainActivity.class);
+            Task task = database.taskDao().getTaskById(id);
+            database.taskDao().deleteTask(task);
+            startActivity(intent);
+        });
 
         ChipGroup state_Chip = findViewById(R.id.state_Change);
         state_Chip.setSingleSelection(true);
