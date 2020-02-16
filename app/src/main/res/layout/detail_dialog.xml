@@ -7,18 +7,17 @@
 
 
     <com.google.android.material.chip.ChipGroup
-        android:id="@+id/dialog_state"
+        android:id="@+id/detail_Group_state"
         android:layout_width="381dp"
         android:layout_height="53dp"
         android:layout_marginTop="24dp"
         android:textAlignment="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/title"
         app:singleSelection="true">
 
         <com.google.android.material.chip.Chip
-            android:id="@+id/state_New"
+            android:id="@+id/detail_State_New"
             style="@style/Widget.MaterialComponents.Chip.Choice"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -29,7 +28,7 @@
             app:chipBackgroundColor="@color/bg_chip_state_list" />
 
         <com.google.android.material.chip.Chip
-            android:id="@+id/state_Assigned"
+            android:id="@+id/detail_State_Assigned"
             style="@style/Widget.MaterialComponents.Chip.Choice"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -39,7 +38,7 @@
             app:chipBackgroundColor="@color/bg_chip_state_list" />
 
         <com.google.android.material.chip.Chip
-            android:id="@+id/state_INProgress"
+            android:id="@+id/detail_State_INProgress"
             style="@style/Widget.MaterialComponents.Chip.Choice"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -49,7 +48,7 @@
             app:chipBackgroundColor="@color/bg_chip_state_list" />
 
         <com.google.android.material.chip.Chip
-            android:id="@+id/state_Complete"
+            android:id="@+id/detail_State_Complete"
             style="@style/Widget.MaterialComponents.Chip.Choice"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -60,7 +59,7 @@
     </com.google.android.material.chip.ChipGroup>
 
     <EditText
-        android:id="@+id/dialog_Title"
+        android:id="@+id/detail_Title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="4dp"
@@ -68,10 +67,10 @@
         android:layout_marginRight="4dp"
         android:layout_marginBottom="4dp"
         android:hint="Title"
-        android:inputType="textAutoCorrect|textCapSentences" />
+        android:inputType="textAutoCorrect" />
 
     <EditText
-        android:id="@+id/dialog_Body"
+        android:id="@+id/detail_Body"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="4dp"
@@ -80,13 +79,6 @@
         android:layout_marginBottom="16dp"
         android:fontFamily="sans-serif"
         android:hint="Description"
-        android:inputType="textAutoCorrect|textCapSentences" />
-
-    <TextView
-        android:id="@+id/dialog_Count"
-        android:layout_width="383dp"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
-        android:text="Total Tasks: " />
+        android:inputType="textAutoCorrect|textMultiLine" />
 
 </LinearLayout>

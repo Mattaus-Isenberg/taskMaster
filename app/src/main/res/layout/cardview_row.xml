@@ -22,8 +22,12 @@
             android:id="@+id/title_Fragment"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center"
             android:layout_margin="@dimen/text_margin"
-            android:textAppearance="?attr/textAppearanceListItem" />
+            android:gravity="center"
+            android:textAlignment="center"
+            android:textAppearance="?attr/textAppearanceListItem"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/body_Fragment"
@@ -31,13 +35,17 @@
             android:layout_height="wrap_content"
             android:layout_margin="@dimen/text_margin"
             android:layout_weight="1"
+            android:textAlignment="center"
             android:textAppearance="?attr/textAppearanceListItem" />
 
         <TextView
             android:id="@+id/state_Fragment"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center"
             android:layout_margin="@dimen/text_margin"
+            android:gravity="center"
+            android:textAlignment="center"
             android:textAppearance="?attr/textAppearanceListItem" />
 
     </LinearLayout>

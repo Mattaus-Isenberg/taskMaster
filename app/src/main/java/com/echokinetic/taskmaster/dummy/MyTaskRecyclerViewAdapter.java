@@ -81,16 +81,17 @@ public class MyTaskRecyclerViewAdapter extends RecyclerView.Adapter<MyTaskRecycl
         }
 
 
+
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mListener.onListFragmentInteraction(holder.mItem);
-                    Intent intent = new Intent(mContext, detailPage.class);
-                    intent.putExtra("title", mValues.get(position).getTitle());
-                    intent.putExtra("description", mValues.get(position).getBody());
-                    intent.putExtra("state", mValues.get(position).getState().toString());
-                    intent.putExtra("ID", mValues.get(position).getId());
-                    mContext.startActivity(intent);
+//                    Intent intent = new Intent(mContext, detailPage.class);
+//                    intent.putExtra("title", mValues.get(position).getTitle());
+//                    intent.putExtra("description", mValues.get(position).getBody());
+//                    intent.putExtra("state", mValues.get(position).getState().toString());
+//                    intent.putExtra("ID", mValues.get(position).getId());
+//                    mContext.startActivity(intent);
                 }
 
     });

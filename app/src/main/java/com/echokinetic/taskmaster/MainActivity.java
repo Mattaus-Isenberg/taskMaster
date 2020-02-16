@@ -4,6 +4,7 @@ package com.echokinetic.taskmaster;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -17,11 +18,15 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 import com.echokinetic.taskmaster.dummy.MyTaskRecyclerViewAdapter;
@@ -49,6 +54,18 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
         setContentView(R.layout.activity_main);
 
+        Window window = this.getWindow();
+
+// clear FLAG_TRANSLUCENT_STATUS flag:
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+
+// add FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS flag to the window
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+
+// finally change the color
+        window.setStatusBarColor(ContextCompat.getColor(this,R.color.black));
+
+
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -74,10 +91,10 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
 
         FloatingActionButton add_Button = findViewById(R.id.floating_Add);
+        add_Button.setTranslationZ(5);
         add_Button.setOnClickListener( (e)-> {
             Intent intent = new Intent(this, addTask.class);
             intent.putExtra("COUNT", adapter.getItemCount());
-            //startActivity(intent);
             addTaskDialog();
         });
 
@@ -127,6 +144,24 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         return true;
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+        switch (item.getItemId())
+        {
+            case R.id.all_tasks_item:
+               startActivity(new Intent(this, allTasks.class));
+               return true;
+            case R.id.settings_item:
+                startActivity(new Intent(this, settings.class));
+                return true;
+            case R.id.about_item:
+                aboutDialog();
+                return true;
+        }
+        return false;
+    }
+
 
     private void reDrawRecyclerFromDB()
     {
@@ -143,16 +178,12 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     @Override
     protected void onStart() {
         super.onStart();
-
-       // Bundle incoming_Bundle = getIntent().getBundleExtra("TASK_EXTRA");
-
-        //if(incoming_Bundle != null)
-       // {
-         //   Task task = incoming_Bundle.getParcelable("TASK");
-         //   taskList.add(task);
-          //  adapter.notifyItemInserted(0);
-       // }
     }
+
+
+
+
+
 
     @Override
     protected void onResume() {
@@ -168,9 +199,15 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         //.setText(pref.getString("user", "Test")+ " Task's");
     }
 
-    @Override
-    public void onListFragmentInteraction(Task item) {
 
+
+
+
+
+    @Override
+    public void onListFragmentInteraction(Task item)
+    {
+        taskDetailDialog(item);
     }
 
     public void addTaskDialog(){
@@ -205,6 +242,152 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
                 .show();
 
     }
+
+    public void aboutDialog(){
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+
+        // get the layout inflater
+        LayoutInflater inflater = MainActivity.this.getLayoutInflater();
+
+        View view = inflater.inflate(R.layout.about_dialog, null);
+
+        builder.setView(view)
+
+                .setNegativeButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        // remove the dialog from the screen
+                    }
+                })
+                .show();
+
+    }
+
+
+
+
+
+
+
+
+
+
+    public void taskDetailDialog(Task item){
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+
+        // get the layout inflater
+        LayoutInflater inflater = MainActivity.this.getLayoutInflater();
+
+        View view = inflater.inflate(R.layout.detail_dialog, null);
+
+        EditText title = (EditText) view.findViewById(R.id.detail_Title);
+        title.setText(item.getTitle());
+
+        EditText body = (EditText) view.findViewById(R.id.detail_Body);
+        body.setText(item.getBody());
+
+        ChipGroup detailChipGroup = (ChipGroup) view.findViewById(R.id.detail_Group_state);
+        detailChipGroup.setSingleSelection(true);
+
+        detailChipGroup.setOnCheckedChangeListener(new ChipGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(ChipGroup chipGroup, int i) {
+
+                Chip chip = chipGroup.findViewById(i);
+                if (chip != null)
+
+                    if(chip.getText().toString().equals("NEW"))
+                    {
+                        item.setState(TaskState.NEW);
+                        database.taskDao().updateTask(item);
+                    }
+                    else if(chip.getText().toString().equals("Assigned"))
+                    {
+                        //Task task = database.taskDao().getTaskById(id);
+                        item.setState(TaskState.ASSIGNED);
+                        database.taskDao().updateTask(item);
+                    }
+                    else if(chip.getText().toString().equals("In Progress"))
+                    {
+                        //Task task = database.taskDao().getTaskById(id);
+                        item.setState(TaskState.IN_PROGRESS);
+                        database.taskDao().updateTask(item);
+                    }
+                    else if(chip.getText().toString().equals("Completed"))
+                    {
+                        //Task task = database.taskDao().getTaskById(id);
+                        item.setState(TaskState.COMPLETE);
+                        database.taskDao().updateTask(item);
+                    }
+
+                Toast.makeText(getApplicationContext(), "Current state is: " + chip.getChipText(), Toast.LENGTH_SHORT).show();
+
+
+            }
+        });
+
+        if(item.getState().equals(TaskState.NEW))
+        {
+            Chip chip = (Chip)view.findViewById(R.id.detail_State_New);
+            chip.setChecked(true);
+        }
+        else if(item.getState().equals(TaskState.ASSIGNED))
+        {
+            Chip chip = (Chip)view.findViewById(R.id.detail_State_Assigned);
+            chip.setChecked(true);
+        }
+        else if(item.getState().equals(TaskState.IN_PROGRESS))
+        {
+            Chip chip = (Chip)view.findViewById(R.id.detail_State_INProgress);
+            chip.setChecked(true);
+        }
+        else if(item.getState().equals(TaskState.COMPLETE))
+        {
+            Chip chip = (Chip)view.findViewById(R.id.detail_State_Complete);
+            chip.setChecked(true);
+        }
+
+
+        builder.setView(view)
+
+
+                // action buttons
+                .setPositiveButton("ADD", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+
+                        insertTask(view);
+                    }
+                })
+                .setNeutralButton("DELETE", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        database.taskDao().deleteTask(item);
+                        taskList.clear();
+                        reDrawRecyclerFromDB();
+                    }
+                })
+                .setNegativeButton("UPDATE", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        EditText title_Field = (EditText) view.findViewById(R.id.detail_Title);
+                        EditText body_Field = (EditText) view.findViewById(R.id.detail_Body);
+                        item.setTitle(title_Field.getText().toString());
+                        item.setBody(body_Field.getText().toString());
+                        database.taskDao().updateTask(item);
+                        taskList.clear();
+                        reDrawRecyclerFromDB();
+                    }
+                })
+                .show();
+
+    }
+
+
+
+
+
+
+
 
     public void insertTask(View view)
     {
