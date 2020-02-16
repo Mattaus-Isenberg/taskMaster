@@ -10,11 +10,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.room.Room;
 
-import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
@@ -23,9 +21,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -213,6 +209,10 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         taskDetailDialog(item);
     }
 
+
+
+
+
     public void addTaskDialog(){
 
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
@@ -237,7 +237,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
                         insertTask(view);
                     }
                 })
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         // remove the dialog from the screen
                     }
@@ -278,7 +278,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
             }
         });
         dialog.show();
-                dialog.show();
+
 
     }
 
@@ -314,34 +314,26 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
             public void onCheckedChanged(ChipGroup chipGroup, int i) {
 
                 Chip chip = chipGroup.findViewById(i);
-                if (chip != null)
-
-                    if(chip.getText().toString().equals("NEW"))
-                    {
+                if (chip != null) {
+                    if (chip.getText().toString().equals("New")) {
+                        System.out.println("TEST");
                         item.setState(TaskState.NEW);
                         database.taskDao().updateTask(item);
-                    }
-                    else if(chip.getText().toString().equals("Assigned"))
-                    {
-                        //Task task = database.taskDao().getTaskById(id);
+                    } else if (chip.getText().toString().equals("Assigned")) {
                         item.setState(TaskState.ASSIGNED);
                         database.taskDao().updateTask(item);
-                    }
-                    else if(chip.getText().toString().equals("In Progress"))
-                    {
-                        //Task task = database.taskDao().getTaskById(id);
+                    } else if (chip.getText().toString().equals("In Progress")) {
                         item.setState(TaskState.IN_PROGRESS);
                         database.taskDao().updateTask(item);
-                    }
-                    else if(chip.getText().toString().equals("Completed"))
-                    {
-                        //Task task = database.taskDao().getTaskById(id);
+                    } else if (chip.getText().toString().equals("Completed")) {
                         item.setState(TaskState.COMPLETE);
                         database.taskDao().updateTask(item);
+                    } else if (chip.getText().toString().equals("High Priority")) {
+                        item.setState(TaskState.HIGH_PRIORITY);
+                        database.taskDao().updateTask(item);
                     }
-
-                Toast.makeText(getApplicationContext(), "Current state is: " + chip.getChipText(), Toast.LENGTH_SHORT).show();
-
+                    Toast.makeText(getApplicationContext(), "Current state is: " + chip.getChipText(), Toast.LENGTH_SHORT).show();
+                }
 
             }
         });
@@ -366,6 +358,11 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
             Chip chip = (Chip)view.findViewById(R.id.detail_State_Complete);
             chip.setChecked(true);
         }
+        else if(item.getState().equals(TaskState.HIGH_PRIORITY))
+        {
+            Chip chip = (Chip)view.findViewById(R.id.detail_High_Priority);
+            chip.setChecked(true);
+        }
 
 
        AlertDialog dialog =  builder.setView(view)
@@ -382,7 +379,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
                         reDrawRecyclerFromDB();
                     }
                 })
-                .setNeutralButton("DELETE", new DialogInterface.OnClickListener() {
+                .setNegativeButton("DELETE", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         database.taskDao().deleteTask(item);
                         taskList.clear();
@@ -405,8 +402,8 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         dialog.setOnShowListener( new DialogInterface.OnShowListener() {
             @Override
             public void onShow(DialogInterface arg0) {
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.black));
                 dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.black));
-                dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setTextColor(getResources().getColor(R.color.black));
             }
         });
         dialog.show();
@@ -447,8 +444,11 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         }
         else if(chip.getText().toString().equals("Completed"))
         {
-            System.out.println("CALLED");
             databaseInject(title, body, TaskState.COMPLETE);
+        }
+        else if(chip.getText().toString().equals("High Priority"))
+        {
+            databaseInject(title, body, TaskState.HIGH_PRIORITY);
         }
         taskList.clear();
         reDrawRecyclerFromDB();

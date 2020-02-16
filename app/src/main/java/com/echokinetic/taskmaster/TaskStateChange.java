@@ -4,6 +4,7 @@ import androidx.room.TypeConverter;
 
 import static com.echokinetic.taskmaster.TaskState.ASSIGNED;
 import static com.echokinetic.taskmaster.TaskState.COMPLETE;
+import static com.echokinetic.taskmaster.TaskState.HIGH_PRIORITY;
 import static com.echokinetic.taskmaster.TaskState.IN_PROGRESS;
 import static com.echokinetic.taskmaster.TaskState.NEW;
 
@@ -27,6 +28,10 @@ public class TaskStateChange
         else if(state == COMPLETE.getStatus_Code())
         {
             return COMPLETE;
+        }
+        else if(state == HIGH_PRIORITY.getStatus_Code())
+        {
+            return HIGH_PRIORITY;
         }
         else
         {

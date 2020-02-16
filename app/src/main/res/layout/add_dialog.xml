@@ -8,9 +8,11 @@
 
     <com.google.android.material.chip.ChipGroup
         android:id="@+id/dialog_state"
-        android:layout_width="381dp"
-        android:layout_height="53dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
         android:layout_marginTop="24dp"
+        android:foregroundGravity="center"
         android:textAlignment="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -18,14 +20,25 @@
         app:singleSelection="true">
 
         <com.google.android.material.chip.Chip
+            android:id="@+id/high_Priority"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dp"
+            android:checkable="true"
+            android:checked="false"
+            android:text="High Priority"
+            app:checkedIconEnabled="true"
+            app:chipBackgroundColor="@color/bg_chip_state_list" />
+
+        <com.google.android.material.chip.Chip
             android:id="@+id/state_New"
             style="@style/Widget.MaterialComponents.Chip.Choice"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
             android:text="New"
             android:theme="@style/Theme.MaterialComponents.Light"
-            app:checkedIcon="@android:color/holo_green_dark"
+            app:checkedIconEnabled="true"
             app:chipBackgroundColor="@color/bg_chip_state_list" />
 
         <com.google.android.material.chip.Chip
@@ -35,7 +48,7 @@
             android:layout_height="wrap_content"
             android:text="Assigned"
             android:theme="@style/Theme.MaterialComponents.Light"
-            app:checkedIcon="@android:color/holo_orange_light"
+            app:checkedIconEnabled="true"
             app:chipBackgroundColor="@color/bg_chip_state_list" />
 
         <com.google.android.material.chip.Chip
@@ -43,9 +56,10 @@
             style="@style/Widget.MaterialComponents.Chip.Choice"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginRight="5dp"
             android:text="In Progress"
             android:theme="@style/Theme.MaterialComponents.Light"
-            app:checkedIcon="@android:color/holo_orange_light"
+            app:checkedIconEnabled="true"
             app:chipBackgroundColor="@color/bg_chip_state_list" />
 
         <com.google.android.material.chip.Chip
@@ -53,10 +67,12 @@
             style="@style/Widget.MaterialComponents.Chip.Choice"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="5dp"
             android:text="Completed"
             android:theme="@style/Theme.MaterialComponents.Light"
-            app:checkedIcon="@android:color/holo_red_dark"
+            app:checkedIconEnabled="true"
             app:chipBackgroundColor="@color/bg_chip_state_list" />
+
     </com.google.android.material.chip.ChipGroup>
 
     <EditText

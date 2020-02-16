@@ -16,6 +16,7 @@ import android.widget.Toast;
 import com.echokinetic.taskmaster.MainActivity;
 import com.echokinetic.taskmaster.R;
 import com.echokinetic.taskmaster.Task;
+import com.echokinetic.taskmaster.TaskState;
 import com.echokinetic.taskmaster.detailPage;
 import com.echokinetic.taskmaster.dummy.TaskFragment.OnListFragmentInteractionListener;
 import com.echokinetic.taskmaster.dummy.dummy.DummyContent.DummyItem;
@@ -52,30 +53,35 @@ public class MyTaskRecyclerViewAdapter extends RecyclerView.Adapter<MyTaskRecycl
         holder.mItem = mValues.get(position);
 
         holder.mTitle.setText(mValues.get(position).getTitle());
-        //holder.mBody.setText(mValues.get(position).getBody());
-        //holder.mState.setText(mValues.get(position).getState().toString());
-        String state = mValues.get(position).getState().toString();
-        if(state.equals("NEW"))
+
+        TaskState state = mValues.get(position).getState();
+        if(state.equals(TaskState.NEW))
         {
             int unicode = 0x1F7E2;
             String emoji = new String(Character.toChars(unicode));
             holder.mState.setText(emoji);
         }
-        else if(state.equals("ASSIGNED"))
+        else if(state.equals(TaskState.ASSIGNED))
         {
             int unicode = 0x1F7E1;
             String emoji = new String(Character.toChars(unicode));
             holder.mState.setText(emoji);
         }
-        else if(state.equals("IN_PROGRESS"))
+        else if(state.equals(TaskState.IN_PROGRESS))
         {
             int unicode = 0x1F7E0;
             String emoji = new String(Character.toChars(unicode));
             holder.mState.setText(emoji);
         }
-        else if(state.equals("COMPLETE"))
+        else if(state.equals(TaskState.COMPLETE))
         {
             int unicode = 0x1F534;
+            String emoji = new String(Character.toChars(unicode));
+            holder.mState.setText(emoji);
+        }
+        else if(state.equals(TaskState.HIGH_PRIORITY))
+        {
+            int unicode = 0x2B50;
             String emoji = new String(Character.toChars(unicode));
             holder.mState.setText(emoji);
         }
