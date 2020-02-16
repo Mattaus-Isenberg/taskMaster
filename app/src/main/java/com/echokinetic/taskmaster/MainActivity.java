@@ -64,6 +64,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
 // finally change the color
         window.setStatusBarColor(ContextCompat.getColor(this,R.color.black));
+        window.setNavigationBarColor(ContextCompat.getColor(this, R.color.black));
 
 
         toolbar = findViewById(R.id.toolbar);

@@ -10,11 +10,16 @@
         android:supportsRtl="true"
         android:statusBarColor="@color/colorPrimaryDark"
         android:theme="@style/Theme.MaterialComponents.NoActionBar">
-        <activity android:name=".settings"></activity>
-        <activity android:name=".detailPage" />
-        <activity android:name=".allTasks" />
-        <activity android:name=".addTask" />
-        <activity android:name=".MainActivity">
+        <activity android:name=".settings"
+            android:screenOrientation="portrait"></activity>
+        <activity android:name=".detailPage"
+            android:screenOrientation="portrait"/>
+        <activity android:name=".allTasks"
+            android:screenOrientation="portrait"/>
+        <activity android:name=".addTask"
+            android:screenOrientation="portrait"/>
+        <activity android:name=".MainActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

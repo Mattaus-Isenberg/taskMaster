@@ -30,6 +30,7 @@ public class settings extends AppCompatActivity {
 
 // finally change the color
         window.setStatusBarColor(ContextCompat.getColor(this,R.color.black));
+        window.setNavigationBarColor(ContextCompat.getColor(this, R.color.black));
 
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         SharedPreferences.Editor editor = pref.edit();
