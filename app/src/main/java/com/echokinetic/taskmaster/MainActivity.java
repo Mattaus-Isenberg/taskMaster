@@ -14,6 +14,7 @@ import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
@@ -80,6 +81,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         //Adapter
 
         taskList = new ArrayList<>();
+
 
 
         DividerItemDecoration mDividerItemDecoration = new DividerItemDecoration(recyclerView.getContext(),
@@ -224,7 +226,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         String count_String = "Total Tasks: " + adapter.getItemCount();
         count.setText(count_String);
 
-        builder.setView(view)
+       AlertDialog dialog = builder.setView(view)
 
 
                 // action buttons
@@ -239,8 +241,16 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
                     public void onClick(DialogInterface dialog, int id) {
                         // remove the dialog from the screen
                     }
-                })
-                .show();
+                }).create();
+
+        dialog.setOnShowListener( new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface arg0) {
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.black));
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.black));
+            }
+        });
+                dialog.show();
 
     }
 
@@ -253,14 +263,22 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
         View view = inflater.inflate(R.layout.about_dialog, null);
 
-        builder.setView(view)
+       AlertDialog dialog = builder.setView(view)
 
                 .setNegativeButton("OK", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         // remove the dialog from the screen
                     }
-                })
-                .show();
+                }).create();
+
+        dialog.setOnShowListener( new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface arg0) {
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.black));
+            }
+        });
+        dialog.show();
+                dialog.show();
 
     }
 
@@ -350,25 +368,10 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         }
 
 
-        builder.setView(view)
-
-
+       AlertDialog dialog =  builder.setView(view)
                 // action buttons
-                .setPositiveButton("ADD", new DialogInterface.OnClickListener() {
+                .setPositiveButton("UPDATE", new DialogInterface.OnClickListener() {
                     @Override
-                    public void onClick(DialogInterface dialog, int id) {
-
-                        insertTask(view);
-                    }
-                })
-                .setNeutralButton("DELETE", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        database.taskDao().deleteTask(item);
-                        taskList.clear();
-                        reDrawRecyclerFromDB();
-                    }
-                })
-                .setNegativeButton("UPDATE", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         EditText title_Field = (EditText) view.findViewById(R.id.detail_Title);
                         EditText body_Field = (EditText) view.findViewById(R.id.detail_Body);
@@ -379,7 +382,35 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
                         reDrawRecyclerFromDB();
                     }
                 })
-                .show();
+                .setNeutralButton("DELETE", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        database.taskDao().deleteTask(item);
+                        taskList.clear();
+                        reDrawRecyclerFromDB();
+                    }
+                })
+//                .setNegativeButton("UPDATE", new DialogInterface.OnClickListener() {
+//                    public void onClick(DialogInterface dialog, int id) {
+//                        EditText title_Field = (EditText) view.findViewById(R.id.detail_Title);
+//                        EditText body_Field = (EditText) view.findViewById(R.id.detail_Body);
+//                        item.setTitle(title_Field.getText().toString());
+//                        item.setBody(body_Field.getText().toString());
+//                        database.taskDao().updateTask(item);
+//                        taskList.clear();
+//                        reDrawRecyclerFromDB();
+//                    }
+//                })
+               .create();
+
+        dialog.setOnShowListener( new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface arg0) {
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.black));
+                dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setTextColor(getResources().getColor(R.color.black));
+            }
+        });
+        dialog.show();
+
 
     }
 
