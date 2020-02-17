@@ -11,8 +11,9 @@
         android:id="@+id/detail_Group_state"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center|center_horizontal"
         android:layout_marginTop="24dp"
-        android:foregroundGravity="center"
+        android:foregroundGravity="center|center_horizontal"
         android:textAlignment="center"
         app:chipSpacing="3dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -27,7 +28,6 @@
             android:layout_marginLeft="5dp"
             android:checked="false"
             android:text="High Priority"
-            android:theme="@style/Theme.MaterialComponents.Light"
             app:checkedIconEnabled="true"
             app:checkedIconVisible="true"
             app:chipBackgroundColor="@color/bg_chip_state_list" />
@@ -38,7 +38,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="New"
-            android:theme="@style/Theme.MaterialComponents.Light"
             app:checkedIconEnabled="true"
             app:chipBackgroundColor="@color/bg_chip_state_list" />
 
@@ -48,7 +47,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Assigned"
-            android:theme="@style/Theme.MaterialComponents.Light"
             app:checkedIconEnabled="true"
             app:chipBackgroundColor="@color/bg_chip_state_list" />
 
@@ -58,7 +56,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="In Progress"
-            android:theme="@style/Theme.MaterialComponents.Light"
             app:checkedIconEnabled="true"
             app:chipBackgroundColor="@color/bg_chip_state_list" />
 
@@ -70,7 +67,6 @@
             android:layout_marginLeft="5dp"
             android:elegantTextHeight="false"
             android:text="Completed"
-            android:theme="@style/Theme.MaterialComponents.Light"
             app:checkedIconEnabled="true"
             app:chipBackgroundColor="@color/bg_chip_state_list"
             app:textStartPadding="8dp" />

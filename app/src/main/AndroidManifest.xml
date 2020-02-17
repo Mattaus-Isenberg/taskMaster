@@ -10,6 +10,10 @@
         android:supportsRtl="true"
         android:statusBarColor="@color/colorPrimaryDark"
         android:theme="@style/Theme.MaterialComponents.NoActionBar">
+        <receiver
+            android:name=".NotificationHandler"
+            android:enabled="true"
+            android:exported="false"></receiver>
         <activity android:name=".settings"
             android:screenOrientation="portrait"></activity>
         <activity android:name=".detailPage"

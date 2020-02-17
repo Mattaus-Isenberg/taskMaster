@@ -1,18 +1,31 @@
 package com.echokinetic.taskmaster;
 
-
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.app.Person;
+import androidx.core.app.RemoteInput;
+import androidx.core.app.TaskStackBuilder;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.room.Room;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
+import android.app.Notification;
+import android.app.PendingIntent;
+//import android.app.RemoteInput;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
@@ -21,7 +34,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RemoteViews;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,25 +45,36 @@ import com.echokinetic.taskmaster.dummy.MyTaskRecyclerViewAdapter;
 import com.echokinetic.taskmaster.dummy.TaskFragment.OnListFragmentInteractionListener;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 
 public class MainActivity extends AppCompatActivity implements OnListFragmentInteractionListener
 {
 
    private List<Task> taskList;
-   private MyTaskRecyclerViewAdapter adapter;
+   private static MyTaskRecyclerViewAdapter adapter;
    private RecyclerView recyclerView;
-   private TaskDB database;
+   private static TaskDB database;
    private Toolbar toolbar;
+
+
+    public static String KEY_REPLY = "key_reply";
+    public static final int NOTIFICATION_ID = 1;
+    private int NOTIFY_ME_ID = 1337;
+    public static String CHANNEL_ID = "My Channel";
+    private  String CHANNEL_NAME = "Task Master";
+    private String CHANNEL_DESCRIPTION = "Persistent ADD notification";
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
 
+        //createNotificationChannel();
         setContentView(R.layout.activity_main);
 
         Window window = this.getWindow();
@@ -80,59 +106,23 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
 
 
-        DividerItemDecoration mDividerItemDecoration = new DividerItemDecoration(recyclerView.getContext(),
-                layoutManager.getOrientation());
-        recyclerView.addItemDecoration(mDividerItemDecoration);
+        //DividerItemDecoration mDividerItemDecoration = new DividerItemDecoration(recyclerView.getContext(),
+            //    layoutManager.getOrientation());
+        //recyclerView.addItemDecoration(mDividerItemDecoration);
 
 
         adapter = new MyTaskRecyclerViewAdapter(this.taskList, this, this::onListFragmentInteraction);
         recyclerView.setAdapter(adapter);
 
 
-        FloatingActionButton add_Button = findViewById(R.id.floating_Add);
-        add_Button.setTranslationZ(5);
+        ExtendedFloatingActionButton add_Button = findViewById(R.id.floating_Add);
+        add_Button.setTranslationZ(15);
         add_Button.setOnClickListener( (e)-> {
             Intent intent = new Intent(this, addTask.class);
             intent.putExtra("COUNT", adapter.getItemCount());
             addTaskDialog();
+            //showNotification(this, "ADD NEW TASK", " " );
         });
-
-//        ClipData.Item all_Tasks = (ClipData.Item) findViewById(R.id.all_tasks_item);
-//        all_Tasks.setOnClickListener( (e)-> {
-//            Intent intent = new Intent(this, allTasks.class);
-//            startActivity(intent);
-//        });
-
-//        Button left_Button = findViewById(R.id.left_Button);
-//        left_Button.setOnClickListener( (e)-> {
-//            Intent intent = new Intent(this, detailPage.class);
-//            intent.putExtra("taskTitle", left_Button.getText().toString());
-//            startActivity(intent);
-//        });
-
-//        Button middle_Button = findViewById(R.id.middle_Button);
-//        middle_Button.setOnClickListener( (e)-> {
-//            Intent intent = new Intent(this, detailPage.class);
-//            intent.putExtra("taskTitle", middle_Button.getText().toString());
-//            startActivity(intent);
-//        });
-
-//        Button drop_DB = findViewById(R.id.right_Button);
-//        drop_DB.setOnClickListener( (e)-> {
-//            //Intent intent = new Intent(this, detailPage.class);
-//            //intent.putExtra("taskTitle", right_Button.getText().toString());
-//            //startActivity(intent);
-//            database.taskDao().delete();
-//            taskList.clear();
-//            this.reDrawRecyclerFromDB();
-//        });
-
-//        ImageButton settings = findViewById(R.id.settings_Button);
-//        settings.setOnClickListener( (e)-> {
-//            Intent intent = new Intent(this, settings.class);
-//           // intent.putExtra("taskTitle", right_Button.getText().toString());
-//            startActivity(intent);
-//        });
 
     }
 
@@ -180,9 +170,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     }
 
 
-
-
-
+//--------------------------------------------------ON RESUME--------------------------------------------
 
     @Override
     protected void onResume() {
@@ -193,15 +181,121 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         this.reDrawRecyclerFromDB();
 
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        //TextView title = findViewById(R.id.mainTitle);
         toolbar.setSubtitle(pref.getString("user", "")+ " Task's");
-        //.setText(pref.getString("user", "Test")+ " Task's");
     }
 
 
+//=========================================================NOTIFICATIONS==============================================
+//====================================================================================================================
+
+//    private void createNotificationChannel() {
+//        // Create the NotificationChannel, but only on API 26+ because
+//        // the NotificationChannel class is new and not in the support library
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//            CharSequence name = channel_Name;
+//            String description = channel_Description;
+//            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+//            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+//            channel.setDescription(description);
+//            // Register the channel with the system; you can't change the importance
+//            // or other notification behaviors after this
+//            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+//            notificationManager.createNotificationChannel(channel);
+//        }
+//    }
+
+
+//--------------------------------------------REMOTE INPUT------------------------------------------
+    @Override
+    protected void onNewIntent(Intent intent)
+    {
+         super.onNewIntent(intent);
+    }
+
+
+    public void showNotification(Context context, String title, String body) {
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        int importance = NotificationManager.IMPORTANCE_HIGH;
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            NotificationChannel mChannel = new NotificationChannel(
+                    CHANNEL_ID, CHANNEL_NAME, importance);
+            notificationManager.createNotificationChannel(mChannel);
+            mChannel.setShowBadge(false);
+            mChannel.enableVibration(false);
+        }
+
+        RemoteViews notificationLayoutExpanded = new RemoteViews(getPackageName(), R.layout.add_dialog);
+
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.mipmap.ic_launcher)
+               // .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
+                .setContentTitle("ADD NEW TASK");
+                //.setContent(notificationLayoutExpanded);
+                //.setCustomBigContentView(notificationLayoutExpanded);
 
 
 
+        String replyLabel = "Task Title";
+
+        //Initialise RemoteInput
+        RemoteInput remoteInput = new RemoteInput.Builder(KEY_REPLY)
+                .setLabel(replyLabel)
+                .build();
+
+
+
+        int randomRequestCode = new Random().nextInt(54325);
+
+        //PendingIntent that restarts the current activity instance.
+        Intent resultIntent = new Intent(this, NotificationHandler.class);
+        //Set a unique request code for this pending intent
+        //PendingIntent resultPendingIntent = PendingIntent.getActivity(this, randomRequestCode, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+
+
+        PendingIntent resultPendingIntent =
+                PendingIntent.getBroadcast(getApplicationContext(),
+                        randomRequestCode,
+                        resultIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT);
+
+        //Notification Action with RemoteInput instance added.
+        NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(
+                android.R.drawable.sym_action_chat, "NEW TASK", resultPendingIntent)
+                .addRemoteInput(remoteInput)
+               // .setAllowGeneratedReplies(true)
+                .build();
+
+        //Notification.Action instance added to Notification Builder.
+        mBuilder.addAction(replyAction);
+
+        Intent Launch = new Intent(this, MainActivity.class);
+        Launch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, Launch, 0);
+
+        mBuilder.setContentIntent(pendingIntent);
+
+
+
+
+//        Intent intentInternal = new Intent(this, MainActivity.class);
+//        intentInternal.putExtra("notificationId", NOTIFICATION_ID);
+//        intentInternal.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+//        PendingIntent dismissIntent = PendingIntent.getActivity(getBaseContext(), 0, intentInternal, PendingIntent.FLAG_CANCEL_CURRENT);
+//        mBuilder.addAction(android.R.drawable.ic_menu_close_clear_cancel, "DISMISS", dismissIntent);
+
+        mBuilder.setOngoing(true);
+        mBuilder.build().flags |= Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT;
+
+        //mBuilder.build().flags = Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT;
+        notificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+    }
+
+
+//=========================================================DIALOGS====================================================
+//====================================================================================================================
 
     @Override
     public void onListFragmentInteraction(Task item)
@@ -210,12 +304,11 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     }
 
 
-
-
+//-------------------------------------------------------ADD DIALOG----------------------------------------------------
 
     public void addTaskDialog(){
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
         // get the layout inflater
         LayoutInflater inflater = MainActivity.this.getLayoutInflater();
@@ -225,9 +318,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         TextView count = (TextView) view.findViewById(R.id.dialog_Count);
         String count_String = "Total Tasks: " + adapter.getItemCount();
         count.setText(count_String);
-
        AlertDialog dialog = builder.setView(view)
-
 
                 // action buttons
                 .setPositiveButton("ADD", new DialogInterface.OnClickListener() {
@@ -246,13 +337,16 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         dialog.setOnShowListener( new DialogInterface.OnShowListener() {
             @Override
             public void onShow(DialogInterface arg0) {
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.black));
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.black));
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.rgb(0, 0, 0));
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.rgb(0, 0, 0));
             }
         });
                 dialog.show();
-
     }
+
+
+//------------------------------------------------ABOUT DIALOG--------------------------------------------------
+
 
     public void aboutDialog(){
 
@@ -283,12 +377,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     }
 
 
-
-
-
-
-
-
+//---------------------------------------------TASK DETAIL DIALOG----------------------------------------------------
 
 
     public void taskDetailDialog(Task item){
@@ -316,7 +405,6 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
                 Chip chip = chipGroup.findViewById(i);
                 if (chip != null) {
                     if (chip.getText().toString().equals("New")) {
-                        System.out.println("TEST");
                         item.setState(TaskState.NEW);
                         database.taskDao().updateTask(item);
                     } else if (chip.getText().toString().equals("Assigned")) {
@@ -402,19 +490,19 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         dialog.setOnShowListener( new DialogInterface.OnShowListener() {
             @Override
             public void onShow(DialogInterface arg0) {
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.black));
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.black));
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.rgb(0, 0, 0));
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.rgb(0, 0, 0));
             }
         });
-        dialog.show();
 
+        dialog.show();
 
     }
 
 
 
-
-
+//=========================================================TASK INSERTION=============================================
+//====================================================================================================================
 
 
 
@@ -454,11 +542,21 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         reDrawRecyclerFromDB();
     }
 
-    public void databaseInject(String title, String body, TaskState state)
+    public static void databaseInject(String title, String body, TaskState state)
     {
         Task task = new Task(title, body, state);
         database.taskDao().addTask(task);
         adapter.notifyDataSetChanged();
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        showNotification(this, "New Task", " ");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
 }

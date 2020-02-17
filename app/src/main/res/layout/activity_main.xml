@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
@@ -12,10 +14,8 @@
         android:id="@+id/toolbar"
         android:layout_width="411dp"
         android:layout_height="wrap_content"
-        android:background="#161414"
-
-
-        android:foregroundTint="#161414"
+        android:background="#00161414"
+        android:foregroundTint="#00161414"
         android:textAlignment="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -26,6 +26,8 @@
         android:id="@+id/view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:background="#331E1C1C"
+        android:backgroundTint="#331E1C1C"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -38,30 +40,33 @@
         android:layout_below="@+id/floating_Add"
         app:layout_constraintBottom_toBottomOf="@+id/view"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.466"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/view" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/floating_Add"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_margin="8dp"
         android:layout_marginBottom="32dp"
-        android:backgroundTint="#070707"
-        android:clickable="true"
-        android:hapticFeedbackEnabled="true"
-        android:outlineAmbientShadowColor="#424141"
-        android:outlineSpotShadowColor="#424141"
-        android:tint="#AB0E0D0D"
-        app:backgroundTint="#161414"
-        app:elevation="9dp"
-        app:fabSize="auto"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:elegantTextHeight="true"
+        android:elevation="25dp"
+        android:outlineAmbientShadowColor="#00100E0E"
+        android:outlineSpotShadowColor="@android:color/darker_gray"
+        android:shadowColor="@android:color/darker_gray"
+        android:shadowDy="180"
+        android:text="ADD"
+        android:textColor="@color/design_default_color_background"
+        android:translationZ="15dp"
+        app:backgroundTint="@color/design_default_color_on_secondary"
+        app:elevation="6dp"
+        app:icon="@mipmap/ic_launcher_foreground"
+        app:iconTint="@color/design_default_color_background"
+        app:layout_constraintBottom_toBottomOf="@+id/recyclerView"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
-        app:maxImageSize="32dp"
-        app:pressedTranslationZ="7dp"
-        app:rippleColor="#2E2E2E"
-        app:srcCompat="@android:drawable/ic_input_add" />
+        app:layout_constraintTop_toBottomOf="@+id/toolbar"
+        app:layout_constraintVertical_bias="0.967" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
