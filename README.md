@@ -2,18 +2,32 @@
 
 ## Day One Tasks
 
-- Create home page - View contains a text view, recycler view and 2 buttons, one button navigates to add a task view and the other to all tasks.
-![Home Page](screenshots/RecyclerImplemented.png)
+- Create home page - Recycler view, toolbar with title and subtitle as well as with 3 menu items all fully functional to an about, all tasks, and settings.
+![Home Page](screenshots/Screenshot_20200219-123529_TaskMaster.jpg)
 
-- Add a Task - Contains a button to add tasks and 2 text fields, 1 for the title of a task another for the description
-![Add Task](screenshots/Screenshot_1581450778.png)
+- Add a Task - Dialog with ChipGroup, 2 EditText for entering title as well as description.
+![Add Task](screenshots/Screenshot_20200219-123518_TaskMaster.jpg)
 
-- All Tasks - Contains a text view as well as image view.
-![All Tasks](screenshots/Screenshot_1581449367.png)
+- ADD Task from Notification drawer.
+![All Tasks](screenshots/Screenshot_20200219-123620_One UI Home.jpg)
 
-- Task Detail - Contains an EditText view as well as MultiLine view. 
-![Task Detail](screenshots/Screenshot_1581535827.png)
+- Task Detail - Dialog with ChipGroup, and 2 EditText fields.
+![Task Detail](screenshots/Screenshot_20200219-123523_TaskMaster.jpg)
 
-Completed day three tasks
+## Completed day three tasks
 
 -Implemented recycler view, adding tasks in main as well as clicking even handling and passing of information.
+
+## Completed day 4 tasks and beyond.
+
+Task Model and Room
+Following the directions provided in the Android documentation, set up Room in your application, and modify your Task class to be an Entity.
+
+Add Task Form
+Modify your Add Task form to save the data entered in as a Task in your local database.
+
+Homepage
+Refactor your homepage’s RecyclerView to display all Task entities in your database.
+
+Detail Page
+Ensure that the description and status of a tapped task are also displayed on the detail page, in addition to the title. (Note that you can accomplish this by passing along the entire Task entity, or by passing along only its ID in the intent.)
