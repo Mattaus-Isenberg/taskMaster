@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     private  String CHANNEL_NAME = "Task Master";
     private String CHANNEL_DESCRIPTION = "Persistent ADD notification";
 
-
+//insert at index o update adapter to inserted at 0 as well as layoutmanager scroll to position//
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
