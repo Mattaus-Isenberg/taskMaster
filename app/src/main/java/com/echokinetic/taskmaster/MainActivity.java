@@ -6,12 +6,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
-import androidx.core.app.Person;
 import androidx.core.app.RemoteInput;
-import androidx.core.app.TaskStackBuilder;
 import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.room.Room;
@@ -24,7 +20,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -34,9 +29,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.RemoteViews;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -76,6 +72,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
         //createNotificationChannel();
         setContentView(R.layout.activity_main);
+
 
         Window window = this.getWindow();
 
@@ -130,7 +127,34 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     public boolean onCreateOptionsMenu(Menu menu)
     {
         getMenuInflater().inflate(R.menu.menu_items, menu);
+
+        Switch star_Switch = (Switch)menu.findItem(R.id.priority_Item)
+                .getActionView().findViewById(R.id.prioritySwitch);
+
+        star_Switch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView,
+                                         boolean isChecked) {
+                if (isChecked)
+                {
+                    filterPriority();
+                }
+                else
+                    {
+                    taskList.clear();
+                    taskList.addAll(database.taskDao().getAll());
+                    adapter.notifyDataSetChanged();
+                }
+            }
+        });
         return true;
+    }
+
+    
+
+    @Override
+    public void invalidateOptionsMenu() {
+        super.invalidateOptionsMenu();
     }
 
     @Override
@@ -147,10 +171,18 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
             case R.id.about_item:
                 aboutDialog();
                 return true;
+            case R.id.priority_Item:
+                filterPriority();
         }
         return false;
     }
 
+    public void filterPriority()
+    {
+        taskList.clear();
+        taskList.addAll(database.taskDao().getTasksByPriority(4));
+        adapter.notifyDataSetChanged();
+    }
 
     private void reDrawRecyclerFromDB()
     {
@@ -164,8 +196,10 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     }
 
 
+
     @Override
-    protected void onStart() {
+    protected void onStart()
+    {
         super.onStart();
     }
 
@@ -301,6 +335,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     public void onListFragmentInteraction(Task item)
     {
         taskDetailDialog(item);
+        invalidateOptionsMenu();
     }
 
 

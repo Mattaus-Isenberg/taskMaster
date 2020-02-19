@@ -23,6 +23,9 @@ public interface TaskDAO
     @Query("SELECT * FROM task WHERE id =:id")
     Task getTaskById(long id);
 
+    @Query("SELECT * FROM task WHERE state =:state")
+    List<Task>  getTasksByPriority(int state);
+
     @Insert
     void addTask(Task task);
 
