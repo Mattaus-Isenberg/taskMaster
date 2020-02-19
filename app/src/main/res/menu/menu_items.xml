@@ -3,6 +3,10 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
+        android:id="@+id/priority_Item"
+        app:actionLayout="@layout/custom_switch"
+        app:showAsAction="always" />
+    <item
         android:id="@+id/all_tasks_item"
         android:title="All Tasks"
         app:showAsAction="never" />
