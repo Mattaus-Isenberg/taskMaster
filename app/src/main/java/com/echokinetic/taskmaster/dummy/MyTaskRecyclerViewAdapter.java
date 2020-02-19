@@ -3,25 +3,15 @@ package com.echokinetic.taskmaster.dummy;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Context;
-import android.content.Intent;
-import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.echokinetic.taskmaster.MainActivity;
 import com.echokinetic.taskmaster.R;
 import com.echokinetic.taskmaster.Task;
 import com.echokinetic.taskmaster.TaskState;
-import com.echokinetic.taskmaster.detailPage;
-import com.echokinetic.taskmaster.dummy.TaskFragment.OnListFragmentInteractionListener;
-import com.echokinetic.taskmaster.dummy.dummy.DummyContent.DummyItem;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -44,7 +34,7 @@ public class MyTaskRecyclerViewAdapter extends RecyclerView.Adapter<MyTaskRecycl
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.cardview_row, parent, false);
+                .inflate(R.layout.dark_row_fragment, parent, false);
         return new ViewHolder(view);
     }
 
