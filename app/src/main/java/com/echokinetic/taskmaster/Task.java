@@ -1,20 +1,34 @@
 package com.echokinetic.taskmaster;
 
-import android.os.Parcel;
-import android.os.Parcelable;
+
 import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 import androidx.room.TypeConverters;
 
+import com.amazonaws.amplify.generated.graphql.ListTasksQuery;
+
+import java.math.BigInteger;
+
 @Entity
-public class Task implements Parcelable {
+public class Task {
 
     @PrimaryKey(autoGenerate = true)
     private long id;
 
     private String title;
     private String body;
+    private int dueDate;
+
+    public String getDynamoDbId() {
+        return dynamoDbId;
+    }
+
+    public void setDynamoDbId(String dynamoDbId) {
+        this.dynamoDbId = dynamoDbId;
+    }
+
+    private String dynamoDbId;
 
     @TypeConverters(TaskStateChange.class)
     private TaskState state;
@@ -25,6 +39,7 @@ public class Task implements Parcelable {
         this.title = title;
         this.body = body;
         this.state = TaskState.NEW;
+        this.dueDate = 0;
     }
 
     @Ignore
@@ -33,6 +48,24 @@ public class Task implements Parcelable {
         this.title = title;
         this.body = body;
         this.state = state;
+        this.dueDate = 0;
+    }
+
+    @Ignore
+    public Task(String title, String body, TaskState state, int dueDate)
+    {
+        this.title = title;
+        this.body = body;
+        this.state = state;
+        this.dueDate = dueDate;
+    }
+
+    public Task(ListTasksQuery.Item item)
+    {
+        this.dynamoDbId = item.id();
+        this.title = item.title();
+        this.body = item.body();
+        this.state = TaskStateChange.newState(item.state().ordinal());
     }
 
     public Task(){}
@@ -53,36 +86,7 @@ public class Task implements Parcelable {
         this.body = body;
     }
 
-    protected Task(Parcel in) {
-        title = in.readString();
-        body = in.readString();
-        //state = in.readString();
-    }
 
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(title);
-        dest.writeString(body);
-       // dest.writeString(state);
-    }
-
-    @SuppressWarnings("unused")
-    public static final Parcelable.Creator<Task> CREATOR = new Parcelable.Creator<Task>() {
-        @Override
-        public Task createFromParcel(Parcel in) {
-            return new Task(in);
-        }
-
-        @Override
-        public Task[] newArray(int size) {
-            return new Task[size];
-        }
-    };
 
     public void setState(TaskState state) {
         this.state = state;
@@ -98,5 +102,13 @@ public class Task implements Parcelable {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    public int getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(int dueDate) {
+        this.dueDate = dueDate;
     }
 }

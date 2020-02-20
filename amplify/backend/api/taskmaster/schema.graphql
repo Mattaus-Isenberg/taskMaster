@@ -1,0 +1,15 @@
+type Task @model {
+  id: ID!
+  title: String!
+  body: String!
+  state: TaskState!
+  dueDate: Int
+}
+
+enum TaskState {
+  NEW
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETE
+  HIGH_PRIORITY
+}

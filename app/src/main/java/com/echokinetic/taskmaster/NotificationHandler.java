@@ -27,7 +27,7 @@ public class NotificationHandler extends BroadcastReceiver
 
             String string_Input = input.toString();
 
-            MainActivity.databaseInject(input.toString(), " ", TaskState.NEW);
+            //MainActivity.databaseInject(input.toString(), " ", TaskState.NEW);
 
 
 
