@@ -272,7 +272,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     public void runQuery()
     {
         mAWSAppSyncClient.query(ListTasksQuery.builder().build())
-                .responseFetcher(AppSyncResponseFetchers.NETWORK_ONLY)
+                .responseFetcher(AppSyncResponseFetchers.CACHE_AND_NETWORK)
                 .enqueue(tasksCallback);
     }
 
