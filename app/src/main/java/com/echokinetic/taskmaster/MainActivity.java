@@ -11,6 +11,25 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.room.Room;
+
+import com.amazonaws.amplify.generated.graphql.CreateTaskMutation;
+import com.amazonaws.amplify.generated.graphql.DeleteTaskMutation;
+import com.amazonaws.amplify.generated.graphql.ListTasksQuery;
+import com.amazonaws.amplify.generated.graphql.OnCreateTaskSubscription;
+import com.amazonaws.amplify.generated.graphql.UpdateTaskMutation;
+import com.amazonaws.mobile.client.AWSMobileClient;
+import com.amazonaws.mobile.client.Callback;
+import com.amazonaws.mobile.client.HostedUIOptions;
+import com.amazonaws.mobile.client.SignInUIOptions;
+import com.amazonaws.mobile.client.UserStateDetails;
+import com.amazonaws.mobile.config.AWSConfiguration;
+import com.amazonaws.mobileconnectors.appsync.AWSAppSyncClient;
+import com.amazonaws.mobileconnectors.appsync.AppSyncSubscriptionCall;
+import com.amazonaws.mobileconnectors.appsync.fetcher.AppSyncResponseFetchers;
+import com.apollographql.apollo.GraphQLCall;
+import com.apollographql.apollo.api.Mutation;
+import com.apollographql.apollo.api.Response;
+import com.apollographql.apollo.exception.ApolloException;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import android.app.Notification;
@@ -23,6 +42,7 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -45,11 +65,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import javax.annotation.Nonnull;
+
+import type.CreateTaskInput;
+import type.DeleteTaskInput;
+import type.UpdateTaskInput;
+
 
 public class MainActivity extends AppCompatActivity implements OnListFragmentInteractionListener
 {
 
    private List<Task> taskList;
+    List<Task> fullList;
    private static MyTaskRecyclerViewAdapter adapter;
    private RecyclerView recyclerView;
    private static TaskDB database;
@@ -62,6 +89,11 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     public static String CHANNEL_ID = "My Channel";
     private  String CHANNEL_NAME = "Task Master";
     private String CHANNEL_DESCRIPTION = "Persistent ADD notification";
+
+    private AWSAppSyncClient mAWSAppSyncClient;
+
+
+
 
 //insert at index o update adapter to inserted at 0 as well as layoutmanager scroll to position//
 
@@ -90,11 +122,52 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        AWSMobileClient.getInstance().initialize(getApplicationContext(), new Callback<UserStateDetails>() {
+
+                    @Override
+                    public void onResult(UserStateDetails userStateDetails)
+                    {
+                        Log.i("INIT", "onResult: " + userStateDetails.getUserState());
+                        switch (userStateDetails.getUserState()){
+                            case SIGNED_IN:
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        toolbar.setSubtitle(AWSMobileClient.getInstance().getUsername()+ " Task's");
+                                    }
+                                });
+                                break;
+                            case SIGNED_OUT:
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        toolbar.setSubtitle("Logged Out");
+                                    }
+                                });
+                                break;
+                            default:
+                                AWSMobileClient.getInstance().signOut();
+                                break;
+                        }
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        Log.e("INIT", "Initialization error.", e);
+                    }
+                }
+        );
+
         recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         recyclerView.setHasFixedSize(true);
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
+
+        mAWSAppSyncClient = AWSAppSyncClient.builder()
+                .context(getApplicationContext())
+                .awsConfiguration(new AWSConfiguration(getApplicationContext()))
+                .build();
 
         database = Room.databaseBuilder(getApplicationContext(), TaskDB.class, getString(R.string.app_name)).allowMainThreadQueries().build();
         //Adapter
@@ -121,6 +194,33 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
             //showNotification(this, "ADD NEW TASK", " " );
         });
 
+
+//        OnCreateTaskSubscription subscription = OnCreateTaskSubscription.builder().build();
+//        awsAppSyncClient.subscribe(subscription).execute(new AppSyncSubscriptionCall.Callback<OnCreateTaskSubscription.Data>() {
+//            private static final String TAG = "jtb.Subscription";
+//            // AWS calls this method when a new Task is created
+//            @Override
+//            public void onResponse(@Nonnull com.apollographql.apollo.api.Response<OnCreateTaskSubscription.Data> response) {
+//                //TODO: Verify constructor usage, esp. TaskState
+//                Task task = new Task(response.data().onCreateTask().title(), response.data().onCreateTask().description(), TaskState.valueOf(response.data().onCreateTask().taskState().toString()));
+//                MainActivity.this.taskItemAdapter.addItem(task);
+//            }
+//
+//            @Override
+//            public void onFailure(@Nonnull ApolloException e) {
+//                Log.e(TAG, "Failure in subscription callback: " + e.getMessage());
+//            }
+//
+//            // Called after successful subscription attempt
+//            @Override
+//            public void onCompleted() {
+//                Log.i(TAG, "Subscription successful.");
+//            }
+//        });
+
+        // Calls the Get All Tasks query - returns a list
+        this.runQuery();
+
     }
 
     @Override
@@ -130,21 +230,21 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
         Switch star_Switch = (Switch)menu.findItem(R.id.priority_Item)
                 .getActionView().findViewById(R.id.prioritySwitch);
-
         star_Switch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView,
-                                         boolean isChecked) {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
+            {
                 if (isChecked)
                 {
                     filterPriority();
                 }
                 else
                     {
-                    taskList.clear();
-                    taskList.addAll(database.taskDao().getAll());
-                    adapter.notifyDataSetChanged();
-                }
+                        taskList.clear();
+                    //taskList.addAll(database.taskDao().getAll());
+                        taskList.addAll(fullList);
+                        adapter.notifyDataSetChanged();
+                    }
             }
         });
         return true;
@@ -171,6 +271,13 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
             case R.id.about_item:
                 aboutDialog();
                 return true;
+            case R.id.authentication:
+                authenticate();
+                return true;
+            case R.id.logout:
+                AWSMobileClient.getInstance().signOut();
+                toolbar.setSubtitle("Logged Out");
+                return true;
             case R.id.priority_Item:
                 filterPriority();
         }
@@ -179,21 +286,73 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
     public void filterPriority()
     {
+        List<Task> starList = new ArrayList<>();
+        fullList = new ArrayList<>();
+        fullList.addAll(taskList);
+        for(Task task : taskList)
+        {
+            if(task.getState().getStatus_Code() == TaskState.HIGH_PRIORITY.getStatus_Code())
+            {
+                starList.add(task);
+            }
+        }
+
         taskList.clear();
-        taskList.addAll(database.taskDao().getTasksByPriority(4));
+        taskList.addAll(starList);
+
+        //taskList.addAll(database.taskDao().getTasksByPriority(4));
+
         adapter.notifyDataSetChanged();
     }
 
     private void reDrawRecyclerFromDB()
     {
-        database = Room.databaseBuilder(getApplicationContext(), TaskDB.class, getString(R.string.app_name))
-                .allowMainThreadQueries()
-                .fallbackToDestructiveMigration()
-                .allowMainThreadQueries()
-                .build();
-        taskList.addAll(database.taskDao().getAll());
-        adapter.notifyDataSetChanged();
+//        database = Room.databaseBuilder(getApplicationContext(), TaskDB.class, getString(R.string.app_name))
+//                .allowMainThreadQueries()
+//                .fallbackToDestructiveMigration()
+//                .allowMainThreadQueries()
+//                .build();
+//        taskList.addAll(database.taskDao().getAll());
+//        adapter.notifyDataSetChanged();
+        runQuery();
     }
+
+    public void runQuery()
+    {
+        mAWSAppSyncClient.query(ListTasksQuery.builder().build())
+                .responseFetcher(AppSyncResponseFetchers.CACHE_AND_NETWORK)
+                .enqueue(tasksCallback);
+    }
+
+    private GraphQLCall.Callback<ListTasksQuery.Data> tasksCallback = new GraphQLCall.Callback<ListTasksQuery.Data>() {
+        @Override
+        public void onResponse(@Nonnull Response<ListTasksQuery.Data> response)
+        {
+            //Log.i("Results", response.data().listTasks().items().toString());
+            runOnUiThread(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    taskList.clear();
+                    List<ListTasksQuery.Item> items = response.data().listTasks().items();
+                    taskList.clear();
+                    for(ListTasksQuery.Item item : items)
+                    {
+                        taskList.add(new Task(item));
+                    }
+                    adapter.notifyDataSetChanged();
+                }
+            });
+        }
+
+        @Override
+        public void onFailure(@Nonnull ApolloException e)
+        {
+            Log.e("ERROR", e.toString());
+           // Toast.makeText(getApplicationContext(), "DynamoDB Query ERROR", Toast.LENGTH_SHORT).show();
+        }
+    };
 
 
 
@@ -204,18 +363,54 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     }
 
 
+    public void authenticate()
+    {
+        AWSMobileClient.getInstance().showSignIn(
+                this,
+                SignInUIOptions.builder()
+                        .nextActivity(MainActivity.class)
+                        .logo(R.mipmap.ic_launcher)
+                        .backgroundColor(R.color.black)
+                        .canCancel(true)
+                        .build(),
+                new Callback<UserStateDetails>() {
+                    @Override
+                    public void onResult(UserStateDetails result) {
+                        //Log.d(TAG, "onResult: " + result.getUserState());
+                        switch (result.getUserState()){
+                            case SIGNED_IN:
+                                Log.i("INIT", "logged in!");
+                                break;
+                            case SIGNED_OUT:
+                                //Log.i(TAG, "onResult: User did not choose to sign-in");
+                                break;
+                            default:
+                                AWSMobileClient.getInstance().signOut();
+                                break;
+                        }
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        //Log.e(TAG, "onError: ", e);
+                    }
+                }
+        );
+    }
+
 //--------------------------------------------------ON RESUME--------------------------------------------
 
     @Override
     protected void onResume() {
         super.onResume();
-
+        //toolbar.setSubtitle(AWSMobileClient.getInstance().getUsername()+ " Task's");
         taskList.clear();
+        runQuery();
 
-        this.reDrawRecyclerFromDB();
+        //reDrawRecyclerFromDB();
 
-        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        toolbar.setSubtitle(pref.getString("user", "")+ " Task's");
+        //SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+       // toolbar.setSubtitle(pref.getString("user", "")+ " Task's");
     }
 
 
@@ -436,24 +631,30 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         detailChipGroup.setOnCheckedChangeListener(new ChipGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(ChipGroup chipGroup, int i) {
-
+//---------------------------------------------correct
                 Chip chip = chipGroup.findViewById(i);
                 if (chip != null) {
                     if (chip.getText().toString().equals("New")) {
                         item.setState(TaskState.NEW);
-                        database.taskDao().updateTask(item);
+                        //database.taskDao().updateTask(item);
+                        runUPDATEMutation(item);
                     } else if (chip.getText().toString().equals("Assigned")) {
                         item.setState(TaskState.ASSIGNED);
-                        database.taskDao().updateTask(item);
+                        //database.taskDao().updateTask(item);
+                        runUPDATEMutation(item);
                     } else if (chip.getText().toString().equals("In Progress")) {
                         item.setState(TaskState.IN_PROGRESS);
-                        database.taskDao().updateTask(item);
+                        //database.taskDao().updateTask(item);
+                        runUPDATEMutation(item);
                     } else if (chip.getText().toString().equals("Completed")) {
                         item.setState(TaskState.COMPLETE);
-                        database.taskDao().updateTask(item);
+                        //database.taskDao().updateTask(item);
+                        runUPDATEMutation(item);
                     } else if (chip.getText().toString().equals("High Priority")) {
                         item.setState(TaskState.HIGH_PRIORITY);
-                        database.taskDao().updateTask(item);
+                        //database.taskDao().updateTask(item);
+                        runUPDATEMutation(item);
+                        adapter.notifyDataSetChanged();
                     }
                     Toast.makeText(getApplicationContext(), "Current state is: " + chip.getChipText(), Toast.LENGTH_SHORT).show();
                 }
@@ -497,16 +698,20 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
                         EditText body_Field = (EditText) view.findViewById(R.id.detail_Body);
                         item.setTitle(title_Field.getText().toString());
                         item.setBody(body_Field.getText().toString());
-                        database.taskDao().updateTask(item);
+                        //database.taskDao().updateTask(item);
+                        runUPDATEMutation(item);
                         taskList.clear();
-                        reDrawRecyclerFromDB();
+                        runQuery();
+                       // reDrawRecyclerFromDB();
                     }
                 })
                 .setNegativeButton("DELETE", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        database.taskDao().deleteTask(item);
+                        //database.taskDao().deleteTask(item);
+                        runDELETEMutation(item);
                         taskList.clear();
-                        reDrawRecyclerFromDB();
+                        runQuery();
+                       // reDrawRecyclerFromDB();
                     }
                 })
 //                .setNegativeButton("UPDATE", new DialogInterface.OnClickListener() {
@@ -574,15 +779,100 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
             databaseInject(title, body, TaskState.HIGH_PRIORITY);
         }
         taskList.clear();
-        reDrawRecyclerFromDB();
+        runQuery();
+        //reDrawRecyclerFromDB();
     }
 
-    public static void databaseInject(String title, String body, TaskState state)
+    public  void databaseInject(String title, String body, TaskState state)
     {
         Task task = new Task(title, body, state);
-        database.taskDao().addTask(task);
+        //database.taskDao().addTask(task);
+        runCREATEMutation(task);
         adapter.notifyDataSetChanged();
     }
+
+    public void runCREATEMutation(Task task){
+        Long id = task.getId();
+
+        CreateTaskInput createTodoInput = CreateTaskInput.builder()
+                .title(task.getTitle())
+                .body(task.getBody())
+                .state(type.TaskState.valueOf(task.getState().toString()))
+                .dueDate(task.getDueDate()).build();
+
+        mAWSAppSyncClient.mutate(CreateTaskMutation.builder().input(createTodoInput).build())
+                .enqueue(createMutationCallback);
+    }
+
+    private GraphQLCall.Callback<CreateTaskMutation.Data> createMutationCallback = new GraphQLCall.Callback<CreateTaskMutation.Data>() {
+        @Override
+        public void onResponse(@Nonnull Response<CreateTaskMutation.Data> response)
+        {
+            Log.i("Results", "Added Todo");
+           // reDrawRecyclerFromDB();
+        runQuery();
+        }
+
+        @Override
+        public void onFailure(@Nonnull ApolloException e) {
+            Log.e("Error", e.toString());
+        }
+    };
+
+    public void runUPDATEMutation(Task task){
+        Long id = task.getId();
+
+        UpdateTaskInput updateTaskInput = UpdateTaskInput.builder()
+                .id(task.getDynamoDbId())
+                .title(task.getTitle())
+                .body(task.getBody())
+                .state(type.TaskState.valueOf(task.getState().toString()))
+                .dueDate(task.getDueDate()).build();
+
+
+        mAWSAppSyncClient.mutate(UpdateTaskMutation.builder().input(updateTaskInput).build())
+                .enqueue(updateMutationCallback);
+    }
+
+    private GraphQLCall.Callback<UpdateTaskMutation.Data> updateMutationCallback = new GraphQLCall.Callback<UpdateTaskMutation.Data>() {
+        @Override
+        public void onResponse(@Nonnull Response<UpdateTaskMutation.Data> response)
+        {
+            Log.i("Results", "Added Todo");
+            // reDrawRecyclerFromDB();
+            runQuery();
+        }
+
+        @Override
+        public void onFailure(@Nonnull ApolloException e) {
+            Log.e("Error", e.toString());
+        }
+    };
+
+    public void runDELETEMutation(Task task){
+        Long id = task.getId();
+
+        DeleteTaskInput deleteTaskInput = DeleteTaskInput.builder().id(task.getDynamoDbId()).build();
+
+
+        mAWSAppSyncClient.mutate(DeleteTaskMutation.builder().input(deleteTaskInput).build())
+                .enqueue(deleteMutationCallback);
+    }
+
+    private GraphQLCall.Callback<DeleteTaskMutation.Data> deleteMutationCallback = new GraphQLCall.Callback<DeleteTaskMutation.Data>() {
+        @Override
+        public void onResponse(@Nonnull Response<DeleteTaskMutation.Data> response)
+        {
+            Log.i("Results", "Added Todo");
+            // reDrawRecyclerFromDB();
+            runQuery();
+        }
+
+        @Override
+        public void onFailure(@Nonnull ApolloException e) {
+            Log.e("Error", e.toString());
+        }
+    };
 
     @Override
     protected void onStop() {
@@ -594,4 +884,11 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     protected void onDestroy() {
         super.onDestroy();
     }
+
+//    public static void reDraw()
+//    {
+//        this.
+//    }
 }
+
+

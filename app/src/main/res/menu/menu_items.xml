@@ -15,6 +15,12 @@
         android:title="Settings"
         app:showAsAction="never" />
     <item
+        android:id="@+id/authentication"
+        android:title="Authenticate" />
+    <item
+        android:id="@+id/logout"
+        android:title="Sign Out" />
+    <item
         android:id="@+id/about_item"
         android:title="About"
         app:showAsAction="never" />
