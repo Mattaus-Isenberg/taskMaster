@@ -280,12 +280,13 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         @Override
         public void onResponse(@Nonnull Response<ListTasksQuery.Data> response)
         {
-            Log.i("Results", response.data().listTasks().items().toString());
+            //Log.i("Results", response.data().listTasks().items().toString());
             runOnUiThread(new Runnable()
             {
                 @Override
                 public void run()
                 {
+                    taskList.clear();
                     List<ListTasksQuery.Item> items = response.data().listTasks().items();
                     taskList.clear();
                     for(ListTasksQuery.Item item : items)
@@ -800,4 +801,11 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     protected void onDestroy() {
         super.onDestroy();
     }
+
+//    public static void reDraw()
+//    {
+//        this.
+//    }
 }
+
+
