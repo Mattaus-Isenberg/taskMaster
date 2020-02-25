@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
 
 // finally change the color
-        window.setStatusBarColor(ContextCompat.getColor(this,R.color.black));
+        window.setStatusBarColor(ContextCompat.getColor(this, R.color.black));
         window.setNavigationBarColor(ContextCompat.getColor(this, R.color.black));
 
 
