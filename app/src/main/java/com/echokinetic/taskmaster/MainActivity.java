@@ -26,6 +26,13 @@ import com.amazonaws.mobile.config.AWSConfiguration;
 import com.amazonaws.mobileconnectors.appsync.AWSAppSyncClient;
 import com.amazonaws.mobileconnectors.appsync.AppSyncSubscriptionCall;
 import com.amazonaws.mobileconnectors.appsync.fetcher.AppSyncResponseFetchers;
+import com.amplifyframework.core.Amplify;
+import com.amplifyframework.core.ResultListener;
+import com.amplifyframework.storage.result.StorageDownloadFileResult;
+import com.amplifyframework.storage.result.StorageListResult;
+import com.amplifyframework.storage.result.StorageRemoveResult;
+import com.amplifyframework.storage.result.StorageUploadFileResult;
+import com.amplifyframework.storage.s3.AWSS3StoragePlugin;
 import com.apollographql.apollo.GraphQLCall;
 import com.apollographql.apollo.api.Mutation;
 import com.apollographql.apollo.api.Response;
@@ -61,6 +68,10 @@ import com.echokinetic.taskmaster.dummy.MyTaskRecyclerViewAdapter;
 import com.echokinetic.taskmaster.dummy.TaskFragment.OnListFragmentInteractionListener;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -220,6 +231,25 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
         // Calls the Get All Tasks query - returns a list
         this.runQuery();
+
+        AWSMobileClient.getInstance().initialize(getApplicationContext(), new Callback<UserStateDetails>() {
+            @Override
+            public void onResult(UserStateDetails userStateDetails) {
+                try {
+                    Amplify.addPlugin(new AWSS3StoragePlugin());
+                    Amplify.configure(getApplicationContext());
+                    uploadFile();
+                    Log.i("StorageQuickstart", "All set and ready to go!");
+                } catch (Exception e) {
+                    Log.e("StorageQuickstart", e.getMessage());
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Log.e("StorageQuickstart", "Initialization error.", e);
+            }
+        });
 
     }
 
@@ -782,6 +812,95 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         runQuery();
         //reDrawRecyclerFromDB();
     }
+
+
+    private void uploadFile() {
+        File sampleFile = new File(getApplicationContext().getFilesDir(), "sample.txt");
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(sampleFile));
+            writer.append("Howdy World!");
+            writer.close();
+        }
+        catch(Exception e) {
+            Log.e("StorageQuickstart", e.getMessage());
+        }
+
+        Amplify.Storage.uploadFile(
+                "myUploadedFileName.txt",
+                sampleFile.getAbsolutePath(),
+                new ResultListener<StorageUploadFileResult>() {
+                    @Override
+                    public void onResult(StorageUploadFileResult result) {
+                        Log.i("StorageQuickStart", "Successfully uploaded: " + result.getKey());
+                    }
+
+                    @Override
+                    public void onError(Throwable error) {
+                        Log.e("StorageQuickstart", "Upload error.", error);
+                    }
+                }
+        );
+    }
+
+    private void downloadFile() {
+        Amplify.Storage.downloadFile(
+                "myUploadedFileName.txt",
+                getApplicationContext().getFilesDir() + "/download.txt",
+                new ResultListener<StorageDownloadFileResult>() {
+                    @Override
+                    public void onResult(StorageDownloadFileResult result) {
+                        Log.i("StorageQuickStart", "Successfully downloaded: " + result.getFile().getName());
+                    }
+
+                    @Override
+                    public void onError(Throwable error) {
+                        Log.e("StorageQuickStart", error.getMessage());
+                    }
+                }
+        );
+    }
+
+
+
+    private void listFiles() {
+        Amplify.Storage.list(
+                "",
+                new ResultListener<StorageListResult>() {
+                    @Override
+                    public void onResult(StorageListResult storageListResult) {
+                        for(StorageListResult.Item item : storageListResult.getItems()) {
+                            Log.i("StorageQuickStart", "Item: " + item.getKey());
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable error) {
+                        Log.e("StorageQuickStart", error.getMessage());
+                    }
+                }
+        );
+    }
+
+
+
+    private void removeFile() {
+        Amplify.Storage.remove(
+                "myUploadedFileName.txt",
+                new ResultListener<StorageRemoveResult>() {
+                    @Override
+                    public void onResult(StorageRemoveResult storageRemoveResult) {
+                        Log.i("StorageQuickStart", "Successfully removed: " + storageRemoveResult.getKey());
+                    }
+
+                    @Override
+                    public void onError(Throwable error) {
+                        Log.e("StorageQuickStart", error.getMessage());
+                    }
+                }
+        );
+    }
+
+
 
     public  void databaseInject(String title, String body, TaskState state)
     {

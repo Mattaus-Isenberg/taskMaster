@@ -24,5 +24,11 @@
 			"dependsOn": [],
 			"customAuth": false
 		}
+	},
+	"storage": {
+		"TaskImages": {
+			"service": "S3",
+			"providerPlugin": "awscloudformation"
+		}
 	}
 }
