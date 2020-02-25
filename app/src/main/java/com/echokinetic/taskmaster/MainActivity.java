@@ -17,6 +17,11 @@ import com.amazonaws.amplify.generated.graphql.DeleteTaskMutation;
 import com.amazonaws.amplify.generated.graphql.ListTasksQuery;
 import com.amazonaws.amplify.generated.graphql.OnCreateTaskSubscription;
 import com.amazonaws.amplify.generated.graphql.UpdateTaskMutation;
+import com.amazonaws.mobile.client.AWSMobileClient;
+import com.amazonaws.mobile.client.Callback;
+import com.amazonaws.mobile.client.HostedUIOptions;
+import com.amazonaws.mobile.client.SignInUIOptions;
+import com.amazonaws.mobile.client.UserStateDetails;
 import com.amazonaws.mobile.config.AWSConfiguration;
 import com.amazonaws.mobileconnectors.appsync.AWSAppSyncClient;
 import com.amazonaws.mobileconnectors.appsync.AppSyncSubscriptionCall;
@@ -116,6 +121,42 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        AWSMobileClient.getInstance().initialize(getApplicationContext(), new Callback<UserStateDetails>() {
+
+                    @Override
+                    public void onResult(UserStateDetails userStateDetails)
+                    {
+                        Log.i("INIT", "onResult: " + userStateDetails.getUserState());
+                        switch (userStateDetails.getUserState()){
+                            case SIGNED_IN:
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        toolbar.setSubtitle(AWSMobileClient.getInstance().getUsername()+ " Task's");
+                                    }
+                                });
+                                break;
+                            case SIGNED_OUT:
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        toolbar.setSubtitle("Logged Out");
+                                    }
+                                });
+                                break;
+                            default:
+                                AWSMobileClient.getInstance().signOut();
+                                break;
+                        }
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        Log.e("INIT", "Initialization error.", e);
+                    }
+                }
+        );
 
         recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         recyclerView.setHasFixedSize(true);
@@ -230,6 +271,13 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
             case R.id.about_item:
                 aboutDialog();
                 return true;
+            case R.id.authentication:
+                authenticate();
+                return true;
+            case R.id.logout:
+                AWSMobileClient.getInstance().signOut();
+                toolbar.setSubtitle("Logged Out");
+                return true;
             case R.id.priority_Item:
                 filterPriority();
         }
@@ -315,19 +363,54 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     }
 
 
+    public void authenticate()
+    {
+        AWSMobileClient.getInstance().showSignIn(
+                this,
+                SignInUIOptions.builder()
+                        .nextActivity(MainActivity.class)
+                        .logo(R.mipmap.ic_launcher)
+                        .backgroundColor(R.color.black)
+                        .canCancel(true)
+                        .build(),
+                new Callback<UserStateDetails>() {
+                    @Override
+                    public void onResult(UserStateDetails result) {
+                        //Log.d(TAG, "onResult: " + result.getUserState());
+                        switch (result.getUserState()){
+                            case SIGNED_IN:
+                                Log.i("INIT", "logged in!");
+                                break;
+                            case SIGNED_OUT:
+                                //Log.i(TAG, "onResult: User did not choose to sign-in");
+                                break;
+                            default:
+                                AWSMobileClient.getInstance().signOut();
+                                break;
+                        }
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        //Log.e(TAG, "onError: ", e);
+                    }
+                }
+        );
+    }
+
 //--------------------------------------------------ON RESUME--------------------------------------------
 
     @Override
     protected void onResume() {
         super.onResume();
-
+        //toolbar.setSubtitle(AWSMobileClient.getInstance().getUsername()+ " Task's");
         taskList.clear();
         runQuery();
 
         //reDrawRecyclerFromDB();
 
-        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        toolbar.setSubtitle(pref.getString("user", "")+ " Task's");
+        //SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+       // toolbar.setSubtitle(pref.getString("user", "")+ " Task's");
     }
 
 
