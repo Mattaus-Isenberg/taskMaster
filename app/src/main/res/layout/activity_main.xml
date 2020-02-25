@@ -12,9 +12,10 @@
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
-        android:layout_width="411dp"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="#00161414"
+        android:background="#090808"
+        android:backgroundTint="#090808"
         android:foregroundTint="#00161414"
         android:textAlignment="center"
         app:layout_constraintEnd_toEndOf="parent"
@@ -35,13 +36,13 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
-        android:layout_width="399dp"
-        android:layout_height="703dp"
+        android:layout_width="413dp"
+        android:layout_height="668dp"
         android:layout_below="@+id/floating_Add"
         app:layout_constraintBottom_toBottomOf="@+id/view"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/view" />
+        app:layout_constraintTop_toTopOf="@+id/toolbar" />
 
     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/floating_Add"
