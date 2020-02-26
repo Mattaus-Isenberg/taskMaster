@@ -238,7 +238,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
                 try {
                     Amplify.addPlugin(new AWSS3StoragePlugin());
                     Amplify.configure(getApplicationContext());
-                    uploadFile();
+                    //uploadFile();
                     Log.i("StorageQuickstart", "All set and ready to go!");
                 } catch (Exception e) {
                     Log.e("StorageQuickstart", e.getMessage());
