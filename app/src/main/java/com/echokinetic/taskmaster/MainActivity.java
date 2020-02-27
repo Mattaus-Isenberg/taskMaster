@@ -1,10 +1,12 @@
 package com.echokinetic.taskmaster;
 
+import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.RemoteInput;
 import androidx.core.content.ContextCompat;
@@ -12,29 +14,36 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.room.Room;
 
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import com.amazonaws.amplify.generated.graphql.CreateTaskMutation;
 import com.amazonaws.amplify.generated.graphql.DeleteTaskMutation;
 import com.amazonaws.amplify.generated.graphql.ListTasksQuery;
-import com.amazonaws.amplify.generated.graphql.OnCreateTaskSubscription;
 import com.amazonaws.amplify.generated.graphql.UpdateTaskMutation;
 import com.amazonaws.mobile.client.AWSMobileClient;
 import com.amazonaws.mobile.client.Callback;
-import com.amazonaws.mobile.client.HostedUIOptions;
 import com.amazonaws.mobile.client.SignInUIOptions;
 import com.amazonaws.mobile.client.UserStateDetails;
+import com.amazonaws.mobile.client.UserStateListener;
 import com.amazonaws.mobile.config.AWSConfiguration;
 import com.amazonaws.mobileconnectors.appsync.AWSAppSyncClient;
-import com.amazonaws.mobileconnectors.appsync.AppSyncSubscriptionCall;
 import com.amazonaws.mobileconnectors.appsync.fetcher.AppSyncResponseFetchers;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferService;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amplifyframework.AmplifyException;
 import com.amplifyframework.core.Amplify;
 import com.amplifyframework.core.ResultListener;
+import com.amplifyframework.storage.StorageAccessLevel;
+import com.amplifyframework.storage.options.StorageDownloadFileOptions;
 import com.amplifyframework.storage.result.StorageDownloadFileResult;
 import com.amplifyframework.storage.result.StorageListResult;
 import com.amplifyframework.storage.result.StorageRemoveResult;
 import com.amplifyframework.storage.result.StorageUploadFileResult;
 import com.amplifyframework.storage.s3.AWSS3StoragePlugin;
+import com.amplifyframework.storage.s3.utils.S3RequestUtils;
 import com.apollographql.apollo.GraphQLCall;
-import com.apollographql.apollo.api.Mutation;
 import com.apollographql.apollo.api.Response;
 import com.apollographql.apollo.exception.ApolloException;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
@@ -45,10 +54,11 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -58,6 +68,8 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.RemoteViews;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -68,13 +80,18 @@ import com.echokinetic.taskmaster.dummy.MyTaskRecyclerViewAdapter;
 import com.echokinetic.taskmaster.dummy.TaskFragment.OnListFragmentInteractionListener;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.squareup.picasso.Downloader;
+import com.squareup.picasso.Picasso;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.lang.reflect.Array;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Random;
+import java.util.UUID;
 
 import javax.annotation.Nonnull;
 
@@ -82,11 +99,50 @@ import type.CreateTaskInput;
 import type.DeleteTaskInput;
 import type.UpdateTaskInput;
 
+import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
+import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+import static android.graphics.BitmapFactory.decodeFile;
+
 
 public class MainActivity extends AppCompatActivity implements OnListFragmentInteractionListener
 {
 
-   private List<Task> taskList;
+    private class FetchAWSResources extends AsyncTask <Task, String, URL>
+    {
+        @Override
+        protected URL doInBackground(Task... tasks)
+        {
+            StorageDownloadFileOptions options = StorageDownloadFileOptions.defaultInstance(); // This is your download file options
+            String identityId = AWSMobileClient.getInstance().getIdentityId();
+            String serviceKey = S3RequestUtils.getServiceKey(
+                    StorageAccessLevel.PUBLIC,
+                    identityId,
+                    tasks[0].getUnique_File_ID(),
+                    options.getTargetIdentityId()
+            );
+
+            Calendar calendar = Calendar.getInstance();
+            Date today = calendar.getTime();
+            URL url = clientHatch.generatePresignedUrl(
+                    "taskmaster18253efc36744d35bf7d990433aea683181109-dev",
+                    serviceKey,
+                    new Date(today.getTime() + (1000 * 60 * 60 * 24)));
+            return url;
+        }
+
+        @Override
+        protected void onPostExecute(URL url)
+        {
+            super.onPostExecute(url);
+            Log.i("UUUUUUURRRRRRLLLLLLL", url.toString());
+            Log.i("PPPPPPPPAAAAAAATTTTTTTHHHHHH", url.getPath());
+            Picasso.get().load(url.toString()).into(preview);
+            preview.setVisibility(View.VISIBLE);
+        }
+    }
+
+
+    private List<Task> taskList;
     List<Task> fullList;
    private static MyTaskRecyclerViewAdapter adapter;
    private RecyclerView recyclerView;
@@ -100,8 +156,17 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     public static String CHANNEL_ID = "My Channel";
     private  String CHANNEL_NAME = "Task Master";
     private String CHANNEL_DESCRIPTION = "Persistent ADD notification";
+    String ImageDecode;
+    ImageView imageViewLoad;
+    String unique_File_ID = "";
+    AmazonS3Client clientHatch;
+    ImageView preview;
 
     private AWSAppSyncClient mAWSAppSyncClient;
+    private static final int PICK_IMG_FILE = 1;
+    private static final int IMG_RESULT = 1;
+    private static final int READ_STORAGE_PERMISSION = 100;
+    private static final int WRITE_STORAGE_PERMISSION = 200;
 
 
 
@@ -138,6 +203,16 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
                     @Override
                     public void onResult(UserStateDetails userStateDetails)
                     {
+
+                        try {
+                            Amplify.addPlugin(new AWSS3StoragePlugin());
+                            Amplify.configure(getApplicationContext());
+                            clientHatch = ((AWSS3StoragePlugin) Amplify.Storage.getPlugin("awsS3StoragePlugin")).getEscapeHatch();
+                            Log.i("StorageQuickStart", clientHatch.getRegionName());
+                        } catch (AmplifyException e)
+                        {
+                            e.printStackTrace();
+                        }
                         Log.i("INIT", "onResult: " + userStateDetails.getUserState());
                         switch (userStateDetails.getUserState()){
                             case SIGNED_IN:
@@ -229,29 +304,85 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 //            }
 //        });
 
+
+        getApplicationContext().startService(new Intent(getApplicationContext(), TransferService.class));
+        String[] permissions = {READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE};
+        ActivityCompat.requestPermissions(this, permissions, 1);
+
         // Calls the Get All Tasks query - returns a list
         this.runQuery();
 
-        AWSMobileClient.getInstance().initialize(getApplicationContext(), new Callback<UserStateDetails>() {
-            @Override
-            public void onResult(UserStateDetails userStateDetails) {
-                try {
-                    Amplify.addPlugin(new AWSS3StoragePlugin());
-                    Amplify.configure(getApplicationContext());
-                    //uploadFile();
-                    Log.i("StorageQuickstart", "All set and ready to go!");
-                } catch (Exception e) {
-                    Log.e("StorageQuickstart", e.getMessage());
-                }
-            }
+//        AWSMobileClient.getInstance().initialize(getApplicationContext(), new Callback<UserStateDetails>() {
+//            @Override
+//            public void onResult(UserStateDetails userStateDetails) {
+//                try {
+//                    Amplify.addPlugin(new AWSS3StoragePlugin());
+//                    Amplify.configure(getApplicationContext());
+//                    Log.i("StorageQuickstart", "All set and ready to go!");
+//                } catch (Exception e) {
+//                    Log.e("StorageQuickstart", e.getMessage());
+//                }
+//            }
+//
+//            @Override
+//            public void onError(Exception e) {
+//                Log.e("StorageQuickstart", "Initialization error.", e);
+//            }
+//        });
 
+
+        AWSMobileClient.getInstance().addUserStateListener(new UserStateListener() {
             @Override
-            public void onError(Exception e) {
-                Log.e("StorageQuickstart", "Initialization error.", e);
+            public void onUserStateChanged(UserStateDetails userStateDetails) {
+                switch (userStateDetails.getUserState()){
+                    case SIGNED_OUT:
+                        // user clicked signout button and signedout
+                        Log.i("userState", "user signed out");
+                        break;
+                    case SIGNED_OUT_USER_POOLS_TOKENS_INVALID:
+                        Log.i("userState", "need to login again.");
+                        try {
+                            AWSMobileClient.getInstance().showSignIn(MainActivity.this);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        //Alternatively call .showSignIn()
+                        break;
+                    default:
+                        Log.i("userState", "unsupported");
+                }
             }
         });
 
+
+        AWSMobileClient.getInstance().addUserStateListener(new UserStateListener()
+        {
+            @Override
+            public void onUserStateChanged(UserStateDetails userStateDetails) {
+                switch (userStateDetails.getUserState()){
+                    case GUEST:
+                        Log.i("userState", "user is in guest mode");
+                        break;
+                    case SIGNED_OUT:
+                        Log.i("userState", "user is signed out");
+                        break;
+                    case SIGNED_IN:
+                        Log.i("userState", "user is signed in");
+                        Log.i("IDENTITY ID", AWSMobileClient.getInstance().getIdentityId());
+                        break;
+                    case SIGNED_OUT_USER_POOLS_TOKENS_INVALID:
+                        Log.i("userState", "need to login again");
+                        break;
+                    case SIGNED_OUT_FEDERATED_TOKENS_INVALID:
+                        Log.i("userState", "user logged in via federation, but currently needs new tokens");
+                        break;
+                    default:
+                        Log.e("userState", "unsupported");
+                }
+            }
+        });
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
@@ -588,6 +719,13 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
                         insertTask(view);
                     }
                 })
+               .setNeutralButton("ATTACH", new DialogInterface.OnClickListener() {
+                   @Override
+                   public void onClick(DialogInterface dialog, int id) {
+
+                       openDir();
+                   }
+               })
                 .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         // remove the dialog from the screen
@@ -599,6 +737,13 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
             public void onShow(DialogInterface arg0) {
                 dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.rgb(0, 0, 0));
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.rgb(0, 0, 0));
+                dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setTextColor(Color.rgb(0, 0, 0));
+
+                if(unique_File_ID.length() > 5)
+                {
+                    dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setEnabled(false);
+                    dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setText("FILE ATTACHED");
+                }
             }
         });
                 dialog.show();
@@ -654,6 +799,59 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
         EditText body = (EditText) view.findViewById(R.id.detail_Body);
         body.setText(item.getBody());
+
+        preview = (ImageView) view.findViewById(R.id.previewimg);
+
+
+        if(item.getUnique_File_ID() == null)
+        {
+            if(preview != null)
+            {
+                preview.setVisibility(View.GONE);
+            }
+        }
+        else if(item.getUnique_File_ID().length() > 5)
+        {
+            Log.i("HAS ID", "HAS ID");
+
+//            if (accessLevel.equals(StorageAccessLevel.PRIVATE) || accessLevel.equals(StorageAccessLevel.PROTECTED)) {
+//                return accessLevel.name().toLowerCase(Locale.US) + "/" + userId + "/";
+//            }
+
+//            runOnUiThread(new Runnable()
+//            {
+//                @Override
+//                public void run()
+//                {
+//                    Calendar calendar = Calendar.getInstance();
+//                    Date today = calendar.getTime();
+//                    URL url = clientHatch.generatePresignedUrl(
+//                            "taskmaster18253efc36744d35bf7d990433aea683181109-dev",
+//                            serviceKey,
+//                            new Date(today.getTime() + (1000 * 60 * 60 * 24))
+//
+//
+//                    );
+//                    Picasso.get().load(url.getPath()).into(preview);
+//                }
+//            });
+
+            Task[] array = {item};
+
+            FetchAWSResources fetch = new FetchAWSResources();
+            fetch.execute(array);
+            //preview.setVisibility(View.VISIBLE);
+            //RESOLVE EXTENSIONS
+
+
+          // Picasso.get().load("https:/" + "/taskmaster18253efc36744d35bf7d990433aea683181109-dev" + item.getUnique_File_ID()).into(preview);
+
+//            try {
+//                preview.setImageURI(Uri.parse( url.toURI().toString()));
+//            } catch (URISyntaxException e) {
+//                e.printStackTrace();
+//            }
+        }
 
         ChipGroup detailChipGroup = (ChipGroup) view.findViewById(R.id.detail_Group_state);
         detailChipGroup.setSingleSelection(true);
@@ -787,26 +985,25 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         ChipGroup dialogGroup = (ChipGroup) view.findViewById(R.id.dialog_state);
         Chip chip = dialogGroup.findViewById(dialogGroup.getCheckedChipId());
 
-
         if(chip.getText().toString().equals("New"))
         {
-            databaseInject(title, body, TaskState.NEW);
+            databaseInject(title, body, TaskState.NEW, 0, unique_File_ID);
         }
         else if(chip.getText().toString().equals("Assigned"))
         {
-            databaseInject(title, body, TaskState.ASSIGNED);
+            databaseInject(title, body, TaskState.ASSIGNED, 0, unique_File_ID);
         }
         else if(chip.getText().toString().equals("In Progress"))
         {
-            databaseInject(title, body, TaskState.IN_PROGRESS);
+            databaseInject(title, body, TaskState.IN_PROGRESS, 0, unique_File_ID);
         }
         else if(chip.getText().toString().equals("Completed"))
         {
-            databaseInject(title, body, TaskState.COMPLETE);
+            databaseInject(title, body, TaskState.COMPLETE, 0, unique_File_ID);
         }
         else if(chip.getText().toString().equals("High Priority"))
         {
-            databaseInject(title, body, TaskState.HIGH_PRIORITY);
+            databaseInject(title, body, TaskState.HIGH_PRIORITY, 0, unique_File_ID);
         }
         taskList.clear();
         runQuery();
@@ -814,20 +1011,25 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     }
 
 
-    private void uploadFile() {
-        File sampleFile = new File(getApplicationContext().getFilesDir(), "sample.txt");
-        try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(sampleFile));
-            writer.append("Howdy World!");
-            writer.close();
-        }
-        catch(Exception e) {
-            Log.e("StorageQuickstart", e.getMessage());
-        }
+    private void uploadFile(String file) {
+        //File sampleFile = file;
 
+        if (file != null) {
+
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+            {
+                ActivityCompat.requestPermissions(this,
+                        new String[]
+                                {Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                        Manifest.permission.READ_EXTERNAL_STORAGE},
+                        123);
+
+            }
+        }
+        unique_File_ID = UUID.randomUUID().toString();
         Amplify.Storage.uploadFile(
-                "myUploadedFileName.txt",
-                sampleFile.getAbsolutePath(),
+                unique_File_ID,
+                file,
                 new ResultListener<StorageUploadFileResult>() {
                     @Override
                     public void onResult(StorageUploadFileResult result) {
@@ -842,9 +1044,30 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         );
     }
 
-    private void downloadFile() {
+//    private void uploadFile(File file, Uri imageURI)
+//    {
+//        Log.i("StorageQuickStart", "Successfully CALLED");
+//        Amplify.Storage.uploadFile(
+//                "IMAGE",
+//                file.getAbsolutePath(),
+//                new ResultListener<StorageUploadFileResult>() {
+//                    @Override
+//                    public void onResult(StorageUploadFileResult result) {
+//                        Log.i("StorageQuickStart", "Successfully uploaded: " + result.getKey());
+//                    }
+//
+//                    @Override
+//                    public void onError(Throwable error) {
+//                        Log.e("StorageQuickstart", "Upload error.", error);
+//                    }
+//                }
+//        );
+//    }
+
+    private void downloadFile(String fileID) {
+
         Amplify.Storage.downloadFile(
-                "myUploadedFileName.txt",
+                fileID,
                 getApplicationContext().getFilesDir() + "/download.txt",
                 new ResultListener<StorageDownloadFileResult>() {
                     @Override
@@ -862,7 +1085,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
 
 
-    private void listFiles() {
+    private void listFiles(String fileID) {
         Amplify.Storage.list(
                 "",
                 new ResultListener<StorageListResult>() {
@@ -883,9 +1106,9 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
 
 
-    private void removeFile() {
+    private void removeFile(String fileID) {
         Amplify.Storage.remove(
-                "myUploadedFileName.txt",
+                fileID,
                 new ResultListener<StorageRemoveResult>() {
                     @Override
                     public void onResult(StorageRemoveResult storageRemoveResult) {
@@ -902,9 +1125,10 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
 
 
-    public  void databaseInject(String title, String body, TaskState state)
+    public  void databaseInject(String title, String body, TaskState state, int due, String uniqueID)
     {
-        Task task = new Task(title, body, state);
+        Task task = new Task(title, body, state, due, uniqueID);
+        unique_File_ID = "";
         //database.taskDao().addTask(task);
         runCREATEMutation(task);
         adapter.notifyDataSetChanged();
@@ -917,7 +1141,8 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
                 .title(task.getTitle())
                 .body(task.getBody())
                 .state(type.TaskState.valueOf(task.getState().toString()))
-                .dueDate(task.getDueDate()).build();
+                .dueDate(task.getDueDate())
+                .unique_File_ID(task.getUnique_File_ID()).build();
 
         mAWSAppSyncClient.mutate(CreateTaskMutation.builder().input(createTodoInput).build())
                 .enqueue(createMutationCallback);
@@ -946,7 +1171,8 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
                 .title(task.getTitle())
                 .body(task.getBody())
                 .state(type.TaskState.valueOf(task.getState().toString()))
-                .dueDate(task.getDueDate()).build();
+                .dueDate(task.getDueDate())
+                .unique_File_ID(task.getUnique_File_ID()).build();
 
 
         mAWSAppSyncClient.mutate(UpdateTaskMutation.builder().input(updateTaskInput).build())
@@ -974,6 +1200,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         DeleteTaskInput deleteTaskInput = DeleteTaskInput.builder().id(task.getDynamoDbId()).build();
 
 
+        removeFile(task.getUnique_File_ID());
         mAWSAppSyncClient.mutate(DeleteTaskMutation.builder().input(deleteTaskInput).build())
                 .enqueue(deleteMutationCallback);
     }
@@ -1008,6 +1235,280 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 //    {
 //        this.
 //    }
+
+
+    public void openDirectory(Uri uriToLoad) {
+        // Choose a directory using the system's file picker.
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+
+        // Provide read access to files and sub-directories in the user-selected
+        // directory.
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+        // Optionally, specify a URI for the directory that should be opened in
+        // the system file picker when it loads.
+        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, uriToLoad);
+
+        startActivityForResult(intent, PICK_IMG_FILE);
+    }
+
+//    public void onActivityResult(int requestCode, int resultCode,
+//                                 Intent resultData)
+//    {
+//        super.onActivityResult(requestCode, resultCode, resultData);
+//        if (requestCode == PICK_IMG_FILE
+//                && resultCode == Activity.RESULT_OK) {
+//            // The result data contains a URI for the document or directory that
+//            // the user selected.
+//            Uri uri = null;
+//            if (resultData != null) {
+//                uri = resultData.getData();
+//                uploadFile();
+//            }
+//        }
+//    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        try {
+
+            if (requestCode == IMG_RESULT && resultCode == RESULT_OK
+                    && null != data) {
+
+
+                Uri URI = data.getData();
+                String[] FILE = { MediaStore.Images.Media.DATA };
+
+
+                Cursor cursor = getContentResolver().query(URI,
+                        FILE, null, null, null);
+
+                cursor.moveToFirst();
+
+                int columnIndex = cursor.getColumnIndex(FILE[0]);
+                ImageDecode = cursor.getString(columnIndex);
+                Log.i("DECODE", ImageDecode);
+
+                uploadFile(ImageDecode);
+                //uploadWithTransferUtility(ImageDecode);
+
+                addTaskDialog();
+                cursor.close();
+
+                //imageViewLoad.setImageBitmap(BitmapFactory
+                      //  .decodeFile(ImageDecode));
+
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Please try again", Toast.LENGTH_LONG)
+                    .show();
+        }
+
+    }
+        //ActivityCompat.requestPermissions(this, new String[]{READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 300);
+//        if (requestCode == PICK_IMG_FILE && resultCode == RESULT_OK && null != data) {
+//            Uri selectedImage = data.getData();
+//            String[] filePathColumn = {MediaStore.Images.Media.DATA};
+//
+//            Cursor cursor = getContentResolver().query(selectedImage,
+//                    filePathColumn, null, null, null);
+//            cursor.moveToFirst();
+//
+//            int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+//            String picturePath = cursor.getString(columnIndex);
+//
+//
+//            //uploadWithTransferUtility(picturePath);
+//            uploadFile(new File(selectedImage.getPath()));
+//            cursor.close();
+
+            // String picturePath contains the path of selected Image
+//        }
+//    }
+//    @Override
+//    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+//    {
+//        super.onActivityResult(requestCode, resultCode, data);
+//        if(resultCode != RESULT_CANCELED) {
+//            switch (requestCode) {
+//                case 0:
+//                    if (resultCode == RESULT_OK && data != null) {
+//                        Bitmap selectedImage = (Bitmap) data.getExtras().get("data");
+//                       // imageView.setImageBitmap(selectedImage);
+//                    }
+//
+//                    break;
+//                case 1:
+//                    if (resultCode == RESULT_OK && data != null) {
+//                        Uri selectedImage =  data.getData();
+//                        String[] filePathColumn = {MediaStore.Images.Media.DATA};
+//                        if (selectedImage != null) {
+//                            Cursor cursor = getContentResolver().query(selectedImage,
+//                                    filePathColumn, null, null, null);
+//                            if (cursor != null) {
+//                                cursor.moveToFirst();
+//
+//                                int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+//                                String picturePath = cursor.getString(columnIndex);
+//
+//                                File newImage = new File(picturePath);
+//                                try {
+//                                    uploadWithTransferUtility(newImage);
+//                                    Log.i("DONE DONE DONE", "DONE DONE DONE");
+//                                } catch (URISyntaxException e) {
+//                                    e.printStackTrace();
+//                                    Log.i("FAILED", "FAILED");
+//                                }
+//                                //imageView.setImageBitmap(BitmapFactory.decodeFile(picturePath));
+//                                cursor.close();
+//                            }
+//                        }
+//
+//                    }
+//                    break;
+//            }
+//        }
+//    }
+
+
+//    @Override
+//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        super.onActivityResult(requestCode, resultCode, data);
+//        try {
+//            if (resultCode == RESULT_OK) {
+//                if (requestCode == PICK_IMG_FILE) {
+//                    Uri selectedImageUri = data.getData();
+//                    // Get the path from the Uri
+//                    final String path = getPathFromURI(selectedImageUri);
+//                    Log.i("FILE PATH", path);
+//                    if (path != null) {
+//                        File f = new File(path);
+//                        selectedImageUri = Uri.fromFile(f);
+//                        uploadWithTransferUtility(f, selectedImageUri);
+//                    }
+//                    // Set the image in ImageView
+//
+//                    //ImageView((ImageView) findViewById(R.id.imgView)).setImageURI(selectedImageUri);
+//                }
+//            }
+//        } catch (Exception e) {
+//            Log.e("FileSelectorActivity", "File select error", e);
+//        }
+//    }
+
+
+//    @Override
+//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        super.onActivityResult(requestCode, resultCode, data);
+//        try {
+//            if (resultCode == RESULT_OK) {
+//                if (requestCode == PICK_IMG_FILE) {
+//                    Log.i("CALLED", "CALLED");
+//                    Uri selectedImageUri = data.getData();
+//                    // Get the path from the Uri
+//                    Log.i("CALLED", selectedImageUri.toString());
+//                    String path = selectedImageUri.getPath();
+//                    //File file = new File(new URI(path));
+//
+//                    //Log.i("CALLLLLLLLLEEEEEEEEED", path);
+//                    if (path != null) {
+//                        Log.i("CALLLLLLLLED", "CALLLLLLLLED");
+//                        //File fileToUpload = new File(new URI(path));
+//                       File fileToUpload = new File(path);
+//                        String extension = fileToUpload.getAbsolutePath().substring(fileToUpload.getAbsolutePath().lastIndexOf(":"));
+//                        Log.i("FILLLLLEEEEEE", extension);
+//                        selectedImageUri = Uri.fromFile(fileToUpload);
+//                        Log.i("URIIIIII", selectedImageUri.toString());
+//                        Log.i("URIIIIII", fileToUpload.getPath().toString());
+//                        //uploadFile(fileToUpload, selectedImageUri);
+//                        uploadWithTransferUtility(fileToUpload, selectedImageUri);
+//                    }
+//                    // Set the image in ImageView
+//                    //ImageView((ImageView) findViewById(R.id.imgView)).setImageURI(selectedImageUri);
+//                }
+//            }
+//        } catch (Exception e) {
+//            Log.e("FileSelectorActivity", "File select error", e);
+//        }
+//    }
+
+//    public String getPathFromURI(Uri contentUri) {
+//        String[] filePathColumn = { MediaStore.Images.Media.DATA };
+//
+//        Cursor cursor = getContentResolver().query(contentUri, filePathColumn, null, null, null);
+//        // Move to first row
+//        cursor.moveToFirst();
+//        //Get the column index of MediaStore.Images.Media.DATA
+//        int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+//        //Log.i("COLUMN", Integer.toString(columnIndex));
+//        //Gets the String value in the column
+//        String imgDecodableString = cursor.getString(columnIndex);
+//        //Log.i("COLUMNNNNNNNNNNNNNN", imgDecodableString);
+//        cursor.close();
+//
+//        return imgDecodableString;
+//        // Set the Image in ImageView after decoding the String
+//        //imageView.setImageBitmap(BitmapFactory.decodeFile(imgDecodableString));
+//    }
+
+    private void openDir()
+    {
+        Intent i = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+
+        startActivityForResult(i, PICK_IMG_FILE);
+//        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+//        intent.addCategory(Intent.CATEGORY_OPENABLE);
+//        intent.setType("image/*");
+//        startActivityForResult(Intent.createChooser(intent, "Select Picture"),PICK_IMG_FILE);
+    }
+
+    private void openFile(Uri pickerInitialUri) {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("image/*");
+
+        // Optionally, specify a URI for the file that should appear in the
+        // system file picker when it loads.
+        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, pickerInitialUri);
+
+        startActivityForResult(intent, PICK_IMG_FILE);
+    }
+    
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String[] permissions, int[] grantResults) {
+        switch (requestCode) {
+            case WRITE_STORAGE_PERMISSION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    Log.i("PERMITTED", "AUTHORIZED");
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+            case READ_STORAGE_PERMISSION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.i("PERMITTED", "AUTHORIZED");
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request.
+        }
+    }
 }
+
 
 

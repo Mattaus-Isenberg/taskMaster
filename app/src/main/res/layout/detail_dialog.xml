@@ -96,4 +96,12 @@
         android:hint="Description"
         android:inputType="textAutoCorrect|textMultiLine" />
 
+    <ImageView
+        android:id="@+id/previewimg"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginStart="15dp"
+        tools:srcCompat="@tools:sample/avatars"
+        tools:visibility="invisible" />
+
 </LinearLayout>

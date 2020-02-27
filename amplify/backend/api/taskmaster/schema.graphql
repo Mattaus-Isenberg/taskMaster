@@ -1,7 +1,8 @@
-type Task @model {
+type Task @model @auth(rules: [{ allow: owner, operations: [update, delete] }]){
   id: ID!
   title: String!
   body: String!
+  unique_File_ID: String
   state: TaskState!
   dueDate: Int
 }

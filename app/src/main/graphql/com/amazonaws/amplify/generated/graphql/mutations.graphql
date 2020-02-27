@@ -7,6 +7,7 @@ mutation CreateTask(
     id
     title
     body
+    unique_File_ID
     state
     dueDate
   }
@@ -19,6 +20,7 @@ mutation UpdateTask(
     id
     title
     body
+    unique_File_ID
     state
     dueDate
   }
@@ -31,6 +33,7 @@ mutation DeleteTask(
     id
     title
     body
+    unique_File_ID
     state
     dueDate
   }
