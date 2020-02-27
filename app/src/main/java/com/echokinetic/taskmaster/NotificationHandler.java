@@ -50,6 +50,8 @@ public class NotificationHandler extends BroadcastReceiver
 
             String string_Input = input.toString();
 
+            runCREATEMutation(string_Input);
+
             //MainActivity.databaseInject(input.toString(), " ", TaskState.NEW);
 
 
@@ -115,8 +117,6 @@ public class NotificationHandler extends BroadcastReceiver
         public void onResponse(@Nonnull Response<CreateTaskMutation.Data> response)
         {
             Log.i("Results", "Added Todo");
-            //MainActivity.reDraw();
-            // reDrawRecyclerFromDB();
 
         }
 

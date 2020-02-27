@@ -19,15 +19,7 @@ public class Task {
     private String title;
     private String body;
     private int dueDate;
-
-    public String getDynamoDbId() {
-        return dynamoDbId;
-    }
-
-    public void setDynamoDbId(String dynamoDbId) {
-        this.dynamoDbId = dynamoDbId;
-    }
-
+    private String unique_File_ID;
     private String dynamoDbId;
 
     @TypeConverters(TaskStateChange.class)
@@ -40,6 +32,8 @@ public class Task {
         this.body = body;
         this.state = TaskState.NEW;
         this.dueDate = 0;
+        this.unique_File_ID = "";
+
     }
 
     @Ignore
@@ -49,6 +43,7 @@ public class Task {
         this.body = body;
         this.state = state;
         this.dueDate = 0;
+        this.unique_File_ID = "";
     }
 
     @Ignore
@@ -58,14 +53,27 @@ public class Task {
         this.body = body;
         this.state = state;
         this.dueDate = dueDate;
+        this.unique_File_ID = "";
     }
 
+    @Ignore
+    public Task(String title, String body, TaskState state, int dueDate, String uniqueID)
+    {
+        this.title = title;
+        this.body = body;
+        this.state = state;
+        this.dueDate = dueDate;
+        this.unique_File_ID = uniqueID;
+    }
+
+    @Ignore
     public Task(ListTasksQuery.Item item)
     {
         this.dynamoDbId = item.id();
         this.title = item.title();
         this.body = item.body();
         this.state = TaskStateChange.newState(item.state().ordinal());
+        this.unique_File_ID = item.unique_File_ID();
     }
 
     public Task(){}
@@ -86,7 +94,13 @@ public class Task {
         this.body = body;
     }
 
+    public String getDynamoDbId() {
+        return dynamoDbId;
+    }
 
+    public void setDynamoDbId(String dynamoDbId) {
+        this.dynamoDbId = dynamoDbId;
+    }
 
     public void setState(TaskState state) {
         this.state = state;
@@ -110,5 +124,13 @@ public class Task {
 
     public void setDueDate(int dueDate) {
         this.dueDate = dueDate;
+    }
+
+    public String getUnique_File_ID() {
+        return unique_File_ID;
+    }
+
+    public void setUnique_File_ID(String unique_File_ID) {
+        this.unique_File_ID = unique_File_ID;
     }
 }

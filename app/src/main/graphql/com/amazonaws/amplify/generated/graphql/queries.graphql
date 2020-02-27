@@ -4,6 +4,7 @@ query GetTask($id: ID!) {
     id
     title
     body
+    unique_File_ID
     state
     dueDate
   }
@@ -18,6 +19,7 @@ query ListTasks(
       id
       title
       body
+      unique_File_ID
       state
       dueDate
     }

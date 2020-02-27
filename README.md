@@ -31,3 +31,17 @@ Refactor your homepage’s RecyclerView to display all Task entities in your dat
 
 Detail Page
 Ensure that the description and status of a tapped task are also displayed on the detail page, in addition to the title. (Note that you can accomplish this by passing along the entire Task entity, or by passing along only its ID in the intent.)
+
+## Completed S3, Cognito, DynamoDB
+Implemented all requirements fully including final requirement of S3 uploads of attached images to tasks and presenting preview of it on detail view.
+
+### Attach option on new task
+![Attach Option](screenshots/attachView.jpg)
+
+### Image prompt for selection
+![Selection Prompt](screenshots/selectionPrompt.jpg)
+
+### Preview image populated straight from S3 bucket and not locally
+![Preview Image](screenshots/previewImage.jpg)
+
+[APK FILE](app-debug.apk)
