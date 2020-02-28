@@ -134,8 +134,6 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         protected void onPostExecute(URL url)
         {
             super.onPostExecute(url);
-            Log.i("UUUUUUURRRRRRLLLLLLL", url.toString());
-            Log.i("PPPPPPPPAAAAAAATTTTTTTHHHHHH", url.getPath());
             Picasso.get().load(url.toString()).into(preview);
             preview.setVisibility(View.VISIBLE);
         }
@@ -158,7 +156,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     private String CHANNEL_DESCRIPTION = "Persistent ADD notification";
     String ImageDecode;
     ImageView imageViewLoad;
-    String unique_File_ID = "";
+    String unique_File_ID = " ";
     AmazonS3Client clientHatch;
     ImageView preview;
 
@@ -311,24 +309,6 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
         // Calls the Get All Tasks query - returns a list
         this.runQuery();
-
-//        AWSMobileClient.getInstance().initialize(getApplicationContext(), new Callback<UserStateDetails>() {
-//            @Override
-//            public void onResult(UserStateDetails userStateDetails) {
-//                try {
-//                    Amplify.addPlugin(new AWSS3StoragePlugin());
-//                    Amplify.configure(getApplicationContext());
-//                    Log.i("StorageQuickstart", "All set and ready to go!");
-//                } catch (Exception e) {
-//                    Log.e("StorageQuickstart", e.getMessage());
-//                }
-//            }
-//
-//            @Override
-//            public void onError(Exception e) {
-//                Log.e("StorageQuickstart", "Initialization error.", e);
-//            }
-//        });
 
 
         AWSMobileClient.getInstance().addUserStateListener(new UserStateListener() {
@@ -669,13 +649,6 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
 
 
-
-//        Intent intentInternal = new Intent(this, MainActivity.class);
-//        intentInternal.putExtra("notificationId", NOTIFICATION_ID);
-//        intentInternal.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-//        PendingIntent dismissIntent = PendingIntent.getActivity(getBaseContext(), 0, intentInternal, PendingIntent.FLAG_CANCEL_CURRENT);
-//        mBuilder.addAction(android.R.drawable.ic_menu_close_clear_cancel, "DISMISS", dismissIntent);
-
         mBuilder.setOngoing(true);
         mBuilder.build().flags |= Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT;
 
@@ -802,8 +775,14 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
         preview = (ImageView) view.findViewById(R.id.previewimg);
 
-
         if(item.getUnique_File_ID() == null)
+        {
+            if(preview != null)
+            {
+                preview.setVisibility(View.GONE);
+            }
+        }
+        else if(item.getUnique_File_ID().equals(" "))
         {
             if(preview != null)
             {
@@ -814,43 +793,11 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         {
             Log.i("HAS ID", "HAS ID");
 
-//            if (accessLevel.equals(StorageAccessLevel.PRIVATE) || accessLevel.equals(StorageAccessLevel.PROTECTED)) {
-//                return accessLevel.name().toLowerCase(Locale.US) + "/" + userId + "/";
-//            }
-
-//            runOnUiThread(new Runnable()
-//            {
-//                @Override
-//                public void run()
-//                {
-//                    Calendar calendar = Calendar.getInstance();
-//                    Date today = calendar.getTime();
-//                    URL url = clientHatch.generatePresignedUrl(
-//                            "taskmaster18253efc36744d35bf7d990433aea683181109-dev",
-//                            serviceKey,
-//                            new Date(today.getTime() + (1000 * 60 * 60 * 24))
-//
-//
-//                    );
-//                    Picasso.get().load(url.getPath()).into(preview);
-//                }
-//            });
 
             Task[] array = {item};
 
             FetchAWSResources fetch = new FetchAWSResources();
             fetch.execute(array);
-            //preview.setVisibility(View.VISIBLE);
-            //RESOLVE EXTENSIONS
-
-
-          // Picasso.get().load("https:/" + "/taskmaster18253efc36744d35bf7d990433aea683181109-dev" + item.getUnique_File_ID()).into(preview);
-
-//            try {
-//                preview.setImageURI(Uri.parse( url.toURI().toString()));
-//            } catch (URISyntaxException e) {
-//                e.printStackTrace();
-//            }
         }
 
         ChipGroup detailChipGroup = (ChipGroup) view.findViewById(R.id.detail_Group_state);
@@ -1044,25 +991,6 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         );
     }
 
-//    private void uploadFile(File file, Uri imageURI)
-//    {
-//        Log.i("StorageQuickStart", "Successfully CALLED");
-//        Amplify.Storage.uploadFile(
-//                "IMAGE",
-//                file.getAbsolutePath(),
-//                new ResultListener<StorageUploadFileResult>() {
-//                    @Override
-//                    public void onResult(StorageUploadFileResult result) {
-//                        Log.i("StorageQuickStart", "Successfully uploaded: " + result.getKey());
-//                    }
-//
-//                    @Override
-//                    public void onError(Throwable error) {
-//                        Log.e("StorageQuickstart", "Upload error.", error);
-//                    }
-//                }
-//        );
-//    }
 
     private void downloadFile(String fileID) {
 
@@ -1128,7 +1056,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     public  void databaseInject(String title, String body, TaskState state, int due, String uniqueID)
     {
         Task task = new Task(title, body, state, due, uniqueID);
-        unique_File_ID = "";
+        unique_File_ID = " ";
         //database.taskDao().addTask(task);
         runCREATEMutation(task);
         adapter.notifyDataSetChanged();
@@ -1154,7 +1082,8 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         {
             Log.i("Results", "Added Todo");
            // reDrawRecyclerFromDB();
-        runQuery();
+            taskList.clear();
+            runQuery();
         }
 
         @Override
@@ -1231,10 +1160,6 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         super.onDestroy();
     }
 
-//    public static void reDraw()
-//    {
-//        this.
-//    }
 
 
     public void openDirectory(Uri uriToLoad) {
@@ -1306,151 +1231,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         }
 
     }
-        //ActivityCompat.requestPermissions(this, new String[]{READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 300);
-//        if (requestCode == PICK_IMG_FILE && resultCode == RESULT_OK && null != data) {
-//            Uri selectedImage = data.getData();
-//            String[] filePathColumn = {MediaStore.Images.Media.DATA};
-//
-//            Cursor cursor = getContentResolver().query(selectedImage,
-//                    filePathColumn, null, null, null);
-//            cursor.moveToFirst();
-//
-//            int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-//            String picturePath = cursor.getString(columnIndex);
-//
-//
-//            //uploadWithTransferUtility(picturePath);
-//            uploadFile(new File(selectedImage.getPath()));
-//            cursor.close();
 
-            // String picturePath contains the path of selected Image
-//        }
-//    }
-//    @Override
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data)
-//    {
-//        super.onActivityResult(requestCode, resultCode, data);
-//        if(resultCode != RESULT_CANCELED) {
-//            switch (requestCode) {
-//                case 0:
-//                    if (resultCode == RESULT_OK && data != null) {
-//                        Bitmap selectedImage = (Bitmap) data.getExtras().get("data");
-//                       // imageView.setImageBitmap(selectedImage);
-//                    }
-//
-//                    break;
-//                case 1:
-//                    if (resultCode == RESULT_OK && data != null) {
-//                        Uri selectedImage =  data.getData();
-//                        String[] filePathColumn = {MediaStore.Images.Media.DATA};
-//                        if (selectedImage != null) {
-//                            Cursor cursor = getContentResolver().query(selectedImage,
-//                                    filePathColumn, null, null, null);
-//                            if (cursor != null) {
-//                                cursor.moveToFirst();
-//
-//                                int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-//                                String picturePath = cursor.getString(columnIndex);
-//
-//                                File newImage = new File(picturePath);
-//                                try {
-//                                    uploadWithTransferUtility(newImage);
-//                                    Log.i("DONE DONE DONE", "DONE DONE DONE");
-//                                } catch (URISyntaxException e) {
-//                                    e.printStackTrace();
-//                                    Log.i("FAILED", "FAILED");
-//                                }
-//                                //imageView.setImageBitmap(BitmapFactory.decodeFile(picturePath));
-//                                cursor.close();
-//                            }
-//                        }
-//
-//                    }
-//                    break;
-//            }
-//        }
-//    }
-
-
-//    @Override
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        super.onActivityResult(requestCode, resultCode, data);
-//        try {
-//            if (resultCode == RESULT_OK) {
-//                if (requestCode == PICK_IMG_FILE) {
-//                    Uri selectedImageUri = data.getData();
-//                    // Get the path from the Uri
-//                    final String path = getPathFromURI(selectedImageUri);
-//                    Log.i("FILE PATH", path);
-//                    if (path != null) {
-//                        File f = new File(path);
-//                        selectedImageUri = Uri.fromFile(f);
-//                        uploadWithTransferUtility(f, selectedImageUri);
-//                    }
-//                    // Set the image in ImageView
-//
-//                    //ImageView((ImageView) findViewById(R.id.imgView)).setImageURI(selectedImageUri);
-//                }
-//            }
-//        } catch (Exception e) {
-//            Log.e("FileSelectorActivity", "File select error", e);
-//        }
-//    }
-
-
-//    @Override
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        super.onActivityResult(requestCode, resultCode, data);
-//        try {
-//            if (resultCode == RESULT_OK) {
-//                if (requestCode == PICK_IMG_FILE) {
-//                    Log.i("CALLED", "CALLED");
-//                    Uri selectedImageUri = data.getData();
-//                    // Get the path from the Uri
-//                    Log.i("CALLED", selectedImageUri.toString());
-//                    String path = selectedImageUri.getPath();
-//                    //File file = new File(new URI(path));
-//
-//                    //Log.i("CALLLLLLLLLEEEEEEEEED", path);
-//                    if (path != null) {
-//                        Log.i("CALLLLLLLLED", "CALLLLLLLLED");
-//                        //File fileToUpload = new File(new URI(path));
-//                       File fileToUpload = new File(path);
-//                        String extension = fileToUpload.getAbsolutePath().substring(fileToUpload.getAbsolutePath().lastIndexOf(":"));
-//                        Log.i("FILLLLLEEEEEE", extension);
-//                        selectedImageUri = Uri.fromFile(fileToUpload);
-//                        Log.i("URIIIIII", selectedImageUri.toString());
-//                        Log.i("URIIIIII", fileToUpload.getPath().toString());
-//                        //uploadFile(fileToUpload, selectedImageUri);
-//                        uploadWithTransferUtility(fileToUpload, selectedImageUri);
-//                    }
-//                    // Set the image in ImageView
-//                    //ImageView((ImageView) findViewById(R.id.imgView)).setImageURI(selectedImageUri);
-//                }
-//            }
-//        } catch (Exception e) {
-//            Log.e("FileSelectorActivity", "File select error", e);
-//        }
-//    }
-
-//    public String getPathFromURI(Uri contentUri) {
-//        String[] filePathColumn = { MediaStore.Images.Media.DATA };
-//
-//        Cursor cursor = getContentResolver().query(contentUri, filePathColumn, null, null, null);
-//        // Move to first row
-//        cursor.moveToFirst();
-//        //Get the column index of MediaStore.Images.Media.DATA
-//        int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-//        //Log.i("COLUMN", Integer.toString(columnIndex));
-//        //Gets the String value in the column
-//        String imgDecodableString = cursor.getString(columnIndex);
-//        //Log.i("COLUMNNNNNNNNNNNNNN", imgDecodableString);
-//        cursor.close();
-//
-//        return imgDecodableString;
-//        // Set the Image in ImageView after decoding the String
-//        //imageView.setImageBitmap(BitmapFactory.decodeFile(imgDecodableString));
-//    }
 
     private void openDir()
     {
@@ -1474,7 +1255,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
         startActivityForResult(intent, PICK_IMG_FILE);
     }
-    
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
