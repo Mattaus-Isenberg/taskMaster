@@ -3,6 +3,8 @@ package com.echokinetic.taskmaster;
 import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -30,6 +32,8 @@ import com.amazonaws.mobile.client.UserStateListener;
 import com.amazonaws.mobile.config.AWSConfiguration;
 import com.amazonaws.mobileconnectors.appsync.AWSAppSyncClient;
 import com.amazonaws.mobileconnectors.appsync.fetcher.AppSyncResponseFetchers;
+import com.amazonaws.mobileconnectors.pinpoint.PinpointConfiguration;
+import com.amazonaws.mobileconnectors.pinpoint.PinpointManager;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferService;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amplifyframework.AmplifyException;
@@ -46,6 +50,7 @@ import com.amplifyframework.storage.s3.utils.S3RequestUtils;
 import com.apollographql.apollo.GraphQLCall;
 import com.apollographql.apollo.api.Response;
 import com.apollographql.apollo.exception.ApolloException;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import android.app.Notification;
@@ -80,6 +85,8 @@ import com.echokinetic.taskmaster.dummy.MyTaskRecyclerViewAdapter;
 import com.echokinetic.taskmaster.dummy.TaskFragment.OnListFragmentInteractionListener;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 import com.squareup.picasso.Downloader;
 import com.squareup.picasso.Picasso;
 
@@ -92,6 +99,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 import java.util.UUID;
+
+import com.amazonaws.mobileconnectors.pinpoint.PinpointConfiguration;
+import com.amazonaws.mobileconnectors.pinpoint.PinpointManager;
+import com.google.android.gms.tasks.OnCompleteListener;
+//import com.google.android.gms.tasks.Task;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
+
 
 import javax.annotation.Nonnull;
 
@@ -106,7 +121,6 @@ import static android.graphics.BitmapFactory.decodeFile;
 
 public class MainActivity extends AppCompatActivity implements OnListFragmentInteractionListener
 {
-
     private class FetchAWSResources extends AsyncTask <Task, String, URL>
     {
         @Override
@@ -159,6 +173,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     String unique_File_ID = " ";
     AmazonS3Client clientHatch;
     ImageView preview;
+    private static PinpointManager pinpointManager;
 
     private AWSAppSyncClient mAWSAppSyncClient;
     private static final int PICK_IMG_FILE = 1;
@@ -168,6 +183,45 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
 
 
+    public static PinpointManager getPinpointManager(final Context applicationContext) {
+        if (pinpointManager == null) {
+            final AWSConfiguration awsConfig = new AWSConfiguration(applicationContext);
+            AWSMobileClient.getInstance().initialize(applicationContext, awsConfig, new Callback<UserStateDetails>() {
+                @Override
+                public void onResult(UserStateDetails userStateDetails) {
+                    //Log.i("INIT", userStateDetails.getUserState());
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    Log.e("INIT", "Initialization error.", e);
+                }
+            });
+
+            PinpointConfiguration pinpointConfig = new PinpointConfiguration(
+                    applicationContext,
+                    AWSMobileClient.getInstance(),
+                    awsConfig);
+
+            pinpointManager = new PinpointManager(pinpointConfig);
+
+            FirebaseInstanceId.getInstance().getInstanceId()
+                    .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>()
+                    {
+                        @Override
+                        public void onComplete(@NonNull com.google.android.gms.tasks.Task<InstanceIdResult> task) {
+                            if (!task.isSuccessful()) {
+                               // Log.w(TAG, "getInstanceId failed", task.getException());
+                                return;
+                            }
+                            final String token = task.getResult().getToken();
+                           // Log.d(TAG, "Registering push notifications token: " + token);
+                            pinpointManager.getNotificationClient().registerDeviceToken(token);
+                        }
+                    });
+        }
+        return pinpointManager;
+    }
 
 //insert at index o update adapter to inserted at 0 as well as layoutmanager scroll to position//
 
@@ -278,6 +332,8 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
             //showNotification(this, "ADD NEW TASK", " " );
         });
 
+
+        getPinpointManager(getApplicationContext());
 
 //        OnCreateTaskSubscription subscription = OnCreateTaskSubscription.builder().build();
 //        awsAppSyncClient.subscribe(subscription).execute(new AppSyncSubscriptionCall.Callback<OnCreateTaskSubscription.Data>() {

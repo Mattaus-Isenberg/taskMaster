@@ -8,7 +8,6 @@ import androidx.room.TypeConverters;
 
 import com.amazonaws.amplify.generated.graphql.ListTasksQuery;
 
-import java.math.BigInteger;
 
 @Entity
 public class Task {
