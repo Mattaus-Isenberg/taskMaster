@@ -1,34 +1,42 @@
 {
-	"api": {
-		"taskmaster": {
-			"service": "AppSync",
-			"providerPlugin": "awscloudformation",
-			"output": {
-				"authConfig": {
-					"additionalAuthenticationProviders": [],
-					"defaultAuthentication": {
-						"authenticationType": "API_KEY",
-						"apiKeyConfig": {
-							"description": "Key for taskMaster Android App",
-							"apiKeyExpirationDays": "365"
-						}
-					}
-				}
-			}
-		}
-	},
-	"auth": {
-		"taskmasterb276a837": {
-			"service": "Cognito",
-			"providerPlugin": "awscloudformation",
-			"dependsOn": [],
-			"customAuth": false
-		}
-	},
-	"storage": {
-		"TaskImages": {
-			"service": "S3",
-			"providerPlugin": "awscloudformation"
-		}
-	}
+    "api": {
+        "taskmaster": {
+            "service": "AppSync",
+            "providerPlugin": "awscloudformation",
+            "output": {
+                "authConfig": {
+                    "additionalAuthenticationProviders": [],
+                    "defaultAuthentication": {
+                        "authenticationType": "API_KEY",
+                        "apiKeyConfig": {
+                            "description": "Key for taskMaster Android App",
+                            "apiKeyExpirationDays": "365"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "auth": {
+        "taskmasterb276a837": {
+            "service": "Cognito",
+            "providerPlugin": "awscloudformation",
+            "dependsOn": [],
+            "customAuth": false
+        }
+    },
+    "storage": {
+        "TaskImages": {
+            "service": "S3",
+            "providerPlugin": "awscloudformation"
+        }
+    },
+    "notifications": {
+        "taskMastertyULe": {
+            "service": "Pinpoint",
+            "channels": [
+                "FCM"
+            ]
+        }
+    }
 }
