@@ -1,6 +1,7 @@
 package com.echokinetic.taskmaster;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 
@@ -8,6 +9,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.RemoteInput;
@@ -17,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.room.Room;
 
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -74,7 +78,9 @@ import android.view.WindowManager;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.RemoteViews;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -85,20 +91,38 @@ import com.echokinetic.taskmaster.dummy.MyTaskRecyclerViewAdapter;
 import com.echokinetic.taskmaster.dummy.TaskFragment.OnListFragmentInteractionListener;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
 import com.squareup.picasso.Downloader;
 import com.squareup.picasso.Picasso;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 import java.util.UUID;
+
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
+import java.util.Locale;
+
 
 import com.amazonaws.mobileconnectors.pinpoint.PinpointConfiguration;
 import com.amazonaws.mobileconnectors.pinpoint.PinpointManager;
@@ -174,6 +198,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     AmazonS3Client clientHatch;
     ImageView preview;
     private static PinpointManager pinpointManager;
+    LinearLayoutManager layoutManager;
 
     private AWSAppSyncClient mAWSAppSyncClient;
     private static final int PICK_IMG_FILE = 1;
@@ -181,47 +206,52 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     private static final int READ_STORAGE_PERMISSION = 100;
     private static final int WRITE_STORAGE_PERMISSION = 200;
 
+    private FusedLocationProviderClient fusedLocationClient;
+    String cityName = " ";
+    String stateName = " ";
+    LinearLayout coordinatorLayout;
 
 
-    public static PinpointManager getPinpointManager(final Context applicationContext) {
-        if (pinpointManager == null) {
-            final AWSConfiguration awsConfig = new AWSConfiguration(applicationContext);
-            AWSMobileClient.getInstance().initialize(applicationContext, awsConfig, new Callback<UserStateDetails>() {
-                @Override
-                public void onResult(UserStateDetails userStateDetails) {
-                    //Log.i("INIT", userStateDetails.getUserState());
-                }
 
-                @Override
-                public void onError(Exception e) {
-                    Log.e("INIT", "Initialization error.", e);
-                }
-            });
+//    public static PinpointManager getPinpointManager(final Context applicationContext) {
+//        if (pinpointManager == null) {
+//            final AWSConfiguration awsConfig = new AWSConfiguration(applicationContext);
+//            AWSMobileClient.getInstance().initialize(applicationContext, awsConfig, new Callback<UserStateDetails>() {
+//                @Override
+//                public void onResult(UserStateDetails userStateDetails) {
+//                    //Log.i("INIT", userStateDetails.getUserState());
+//                }
+//
+//                @Override
+//                public void onError(Exception e) {
+//                    Log.e("INIT", "Initialization error.", e);
+//                }
+//            });
 
-            PinpointConfiguration pinpointConfig = new PinpointConfiguration(
-                    applicationContext,
-                    AWSMobileClient.getInstance(),
-                    awsConfig);
-
-            pinpointManager = new PinpointManager(pinpointConfig);
-
-            FirebaseInstanceId.getInstance().getInstanceId()
-                    .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>()
-                    {
-                        @Override
-                        public void onComplete(@NonNull com.google.android.gms.tasks.Task<InstanceIdResult> task) {
-                            if (!task.isSuccessful()) {
-                               // Log.w(TAG, "getInstanceId failed", task.getException());
-                                return;
-                            }
-                            final String token = task.getResult().getToken();
-                           // Log.d(TAG, "Registering push notifications token: " + token);
-                            pinpointManager.getNotificationClient().registerDeviceToken(token);
-                        }
-                    });
-        }
-        return pinpointManager;
-    }
+//            PinpointConfiguration pinpointConfig = new PinpointConfiguration(
+//                    applicationContext,
+//                    AWSMobileClient.getInstance(),
+//                    awsConfig);
+//
+//            pinpointManager = new PinpointManager(pinpointConfig);
+//
+//            FirebaseInstanceId.getInstance().getInstanceId()
+//                    .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>()
+//                    {
+//                        @Override
+//                        public void onComplete(@NonNull com.google.android.gms.tasks.Task<InstanceIdResult> task) {
+//                            if (!task.isSuccessful()) {
+//                               // Log.w(TAG, "getInstanceId failed", task.getException());
+//                                return;
+//                            }
+//                            final String token = task.getResult().getToken();
+//                           // Log.d(TAG, "Registering push notifications token: " + token);
+//                            pinpointManager.getNotificationClient().registerDeviceToken(token);
+//                        }
+//                    });
+//        }
+//        return pinpointManager;
+//    }
 
 //insert at index o update adapter to inserted at 0 as well as layoutmanager scroll to position//
 
@@ -229,6 +259,32 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+
+
+        //Uri URI = data.getData();
+//        String[] FILE = { MediaStore.Images.Media.DATA };
+
+
+//        Cursor cursor = getContentResolver().query(data,
+//                FILE, null, null, null);
+//
+//        cursor.moveToFirst();
+//
+//        int columnIndex = cursor.getColumnIndex(FILE[0]);
+//        ImageDecode = cursor.getString(columnIndex);
+//        Log.i("DECODE", ImageDecode);
+
+        //uploadFile(data.toString());
+        //uploadWithTransferUtility(ImageDecode);
+
+        //addTaskDialog();
+        //cursor.close();
+
+//        if (intentImage.getType().indexOf("image/") != -1)
+//        {
+//            uploadFile(data.toString());
+//            addTaskDialog();
+//        }
 
         //createNotificationChannel();
         setContentView(R.layout.activity_main);
@@ -299,7 +355,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         recyclerView.setHasFixedSize(true);
 
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
 
         mAWSAppSyncClient = AWSAppSyncClient.builder()
@@ -320,6 +376,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
 
         adapter = new MyTaskRecyclerViewAdapter(this.taskList, this, this::onListFragmentInteraction);
+
         recyclerView.setAdapter(adapter);
 
 
@@ -333,7 +390,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         });
 
 
-        getPinpointManager(getApplicationContext());
+//        getPinpointManager(getApplicationContext());
 
 //        OnCreateTaskSubscription subscription = OnCreateTaskSubscription.builder().build();
 //        awsAppSyncClient.subscribe(subscription).execute(new AppSyncSubscriptionCall.Callback<OnCreateTaskSubscription.Data>() {
@@ -364,7 +421,6 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         ActivityCompat.requestPermissions(this, permissions, 1);
 
         // Calls the Get All Tasks query - returns a list
-        this.runQuery();
 
 
         AWSMobileClient.getInstance().addUserStateListener(new UserStateListener() {
@@ -417,6 +473,36 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
                 }
             }
         });
+
+        this.runQuery();
+
+        Intent intentImage = getIntent();
+        String type = intentImage.getType();
+
+        if(type != null && type.contains("image/"))
+        {
+            Uri uri = intentImage.getParcelableExtra(Intent.EXTRA_STREAM);
+            //Log.i(TAG, "image from external share uri: " + uri);
+           // Log.i(TAG, "image from external share path: " + uri.getPath());
+            File f = new File(getFilesDir(), "tmp");
+            // converting file to a stream input to rebuild in a file I can control/use
+            try {
+                InputStream inputStream = getContentResolver().openInputStream(uri);
+                byte[] buffer = new byte[inputStream.available()];
+                inputStream.read(buffer);
+                OutputStream outputStream = new FileOutputStream(f);
+                outputStream.write(buffer);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+               // Log.e(TAG, e.getMessage());
+            } catch (IOException e){
+                e.printStackTrace();
+                //Log.e(TAG, e.getMessage());
+            }
+
+            uploadFile(f.getAbsolutePath());
+            add_Button.performClick();
+        }
     }
 
 
@@ -533,9 +619,21 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
                 {
                     taskList.clear();
                     List<ListTasksQuery.Item> items = response.data().listTasks().items();
+//
+//                    Comparator<ListTasksQuery.Item> idComparator = new Comparator<ListTasksQuery.Item>()
+//                    {
+//                        @Override
+//                        public int compare(ListTasksQuery.Item o1, ListTasksQuery.Item o2)
+//                        {
+//                            return Integer.valueOf(Integer.parseInt(o1.id())).compareTo(Integer.parseInt(o2.id()));
+//                        }
+//                    }
+//
+//                    Collections.sort(items, idComparator);
                     taskList.clear();
                     for(ListTasksQuery.Item item : items)
                     {
+
                         taskList.add(new Task(item));
                     }
                     adapter.notifyDataSetChanged();
@@ -552,6 +650,18 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     };
 
 
+//    public void sort(final String field, List<ListTasksQuery.Item> itemLocationList)
+//    {
+//        final Comparator<ListTasksQuery.Item> comparator;
+//
+//        if(field.equals("title")) {
+//            comparator = idComparator;
+//        } else if (field.equals("id")) {
+//            comparator = idComparator;
+//        } else {
+//            throw new IllegalArgumentException("Comparator not found for " + field);
+//        }
+//    }
 
     @Override
     protected void onStart()
@@ -726,6 +836,37 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
 //-------------------------------------------------------ADD DIALOG----------------------------------------------------
 
+    public void addLocation() {
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        // Got last known location. In some rare situations this can be null.
+                        double latitude = location.getLatitude();
+                        double longitude = location.getLongitude();
+
+                        Geocoder geocoder = new Geocoder(MainActivity.this, Locale.getDefault());
+                        List<Address> addresses;
+                        try {
+                            addresses = geocoder.getFromLocation(latitude, longitude, 1);
+                            cityName = addresses.get(0).getAddressLine(0);
+                            stateName = addresses.get(0).getAddressLine(1);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+
+                        if (location != null) {
+                            // Logic to handle location object
+                        }
+                    }
+                });
+    }
+
+
+
+
     public void addTaskDialog(){
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -736,6 +877,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         View view = inflater.inflate(R.layout.add_dialog, null);
 
         TextView count = (TextView) view.findViewById(R.id.dialog_Count);
+        addLocation();
         String count_String = "Total Tasks: " + adapter.getItemCount();
         count.setText(count_String);
        AlertDialog dialog = builder.setView(view)
@@ -824,6 +966,12 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         View view = inflater.inflate(R.layout.detail_dialog, null);
 
         EditText title = (EditText) view.findViewById(R.id.detail_Title);
+
+        TextView location = (TextView) view.findViewById(R.id.detail_Location);
+
+        String geo_Location = item.getCityName();
+        location.setText(geo_Location);
+
         title.setText(item.getTitle());
 
         EditText body = (EditText) view.findViewById(R.id.detail_Body);
@@ -977,6 +1125,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
 
 
+    @SuppressLint("WrongViewCast")
     public void insertTask(View view)
     {
         EditText dialogTitle = (EditText) view.findViewById(R.id.dialog_Title);
@@ -988,25 +1137,47 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
         ChipGroup dialogGroup = (ChipGroup) view.findViewById(R.id.dialog_state);
         Chip chip = dialogGroup.findViewById(dialogGroup.getCheckedChipId());
 
-        if(chip.getText().toString().equals("New"))
+        //DO NOT REMOVE first conditional check as it will cause a crash on save.
+        if(chip == null)
         {
-            databaseInject(title, body, TaskState.NEW, 0, unique_File_ID);
+            coordinatorLayout = (LinearLayout) findViewById(R.id.relativeLayout);
+
+            Snackbar snackbar = Snackbar
+                    .make(coordinatorLayout, "State selection is required", Snackbar.LENGTH_SHORT)
+                    .setAction("Try again", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            addTaskDialog();
+                        }
+                    });
+            snackbar.setBackgroundTint(Color.rgb(0, 0, 0));
+            snackbar.setTextColor(Color.rgb(255, 255, 255));
+            snackbar.setActionTextColor(Color.rgb(255, 0, 0));
+            snackbar.show();
+//            Toast.makeText(this, "State selection is required", Toast.LENGTH_LONG)
+//                    .show();
+           //databaseInject(title, body, TaskState.NEW, 0, unique_File_ID, cityName);
+        }
+        else if(chip.getText().toString().equals("New"))
+        {
+            databaseInject(title, body, TaskState.NEW, 0, unique_File_ID, cityName);
         }
         else if(chip.getText().toString().equals("Assigned"))
         {
-            databaseInject(title, body, TaskState.ASSIGNED, 0, unique_File_ID);
+            databaseInject(title, body, TaskState.ASSIGNED, 0, unique_File_ID, cityName);
         }
         else if(chip.getText().toString().equals("In Progress"))
         {
-            databaseInject(title, body, TaskState.IN_PROGRESS, 0, unique_File_ID);
+            databaseInject(title, body, TaskState.IN_PROGRESS, 0, unique_File_ID, cityName);
         }
         else if(chip.getText().toString().equals("Completed"))
         {
-            databaseInject(title, body, TaskState.COMPLETE, 0, unique_File_ID);
+            databaseInject(title, body, TaskState.COMPLETE, 0, unique_File_ID, cityName);
+            databaseInject(title, body, TaskState.COMPLETE, 0, unique_File_ID, cityName);
         }
         else if(chip.getText().toString().equals("High Priority"))
         {
-            databaseInject(title, body, TaskState.HIGH_PRIORITY, 0, unique_File_ID);
+            databaseInject(title, body, TaskState.HIGH_PRIORITY, 0, unique_File_ID, cityName);
         }
         taskList.clear();
         runQuery();
@@ -1017,6 +1188,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
     private void uploadFile(String file) {
         //File sampleFile = file;
 
+        Log.i("INCOMING!", file);
         if (file != null) {
 
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
@@ -1109,9 +1281,9 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
 
 
-    public  void databaseInject(String title, String body, TaskState state, int due, String uniqueID)
+    public  void databaseInject(String title, String body, TaskState state, int due, String uniqueID, String cityName)
     {
-        Task task = new Task(title, body, state, due, uniqueID);
+        Task task = new Task(title, body, state, due, uniqueID, cityName);
         unique_File_ID = " ";
         //database.taskDao().addTask(task);
         runCREATEMutation(task);
@@ -1126,7 +1298,8 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
                 .body(task.getBody())
                 .state(type.TaskState.valueOf(task.getState().toString()))
                 .dueDate(task.getDueDate())
-                .unique_File_ID(task.getUnique_File_ID()).build();
+                .unique_File_ID(task.getUnique_File_ID())
+                .cityName(task.getCityName()).build();
 
         mAWSAppSyncClient.mutate(CreateTaskMutation.builder().input(createTodoInput).build())
                 .enqueue(createMutationCallback);
@@ -1157,7 +1330,8 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
                 .body(task.getBody())
                 .state(type.TaskState.valueOf(task.getState().toString()))
                 .dueDate(task.getDueDate())
-                .unique_File_ID(task.getUnique_File_ID()).build();
+                .unique_File_ID(task.getUnique_File_ID())
+                .cityName(task.getCityName()).build();
 
 
         mAWSAppSyncClient.mutate(UpdateTaskMutation.builder().input(updateTaskInput).build())

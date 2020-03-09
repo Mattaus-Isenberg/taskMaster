@@ -7,6 +7,7 @@ subscription OnCreateTask {
     unique_File_ID
     state
     dueDate
+    cityName
   }
 }
 subscription OnUpdateTask {
@@ -17,6 +18,7 @@ subscription OnUpdateTask {
     unique_File_ID
     state
     dueDate
+    cityName
   }
 }
 subscription OnDeleteTask {
@@ -27,5 +29,6 @@ subscription OnDeleteTask {
     unique_File_ID
     state
     dueDate
+    cityName
   }
 }

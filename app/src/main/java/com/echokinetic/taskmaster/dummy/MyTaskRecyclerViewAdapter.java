@@ -43,6 +43,8 @@ public class MyTaskRecyclerViewAdapter extends RecyclerView.Adapter<MyTaskRecycl
         holder.mItem = mValues.get(position);
 
         holder.mTitle.setText(mValues.get(position).getTitle());
+        String location = mValues.get(position).getCityName();
+        holder.mBody.setText(location);
 
         TaskState state = mValues.get(position).getState();
         if(state.equals(TaskState.NEW))

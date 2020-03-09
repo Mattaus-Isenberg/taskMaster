@@ -20,6 +20,7 @@ public class Task {
     private int dueDate;
     private String unique_File_ID;
     private String dynamoDbId;
+    private String cityName;
 
     @TypeConverters(TaskStateChange.class)
     private TaskState state;
@@ -32,7 +33,7 @@ public class Task {
         this.state = TaskState.NEW;
         this.dueDate = 0;
         this.unique_File_ID = "";
-
+        this.cityName = "";
     }
 
     @Ignore
@@ -43,6 +44,7 @@ public class Task {
         this.state = state;
         this.dueDate = 0;
         this.unique_File_ID = "";
+        this.cityName = "";
     }
 
     @Ignore
@@ -53,6 +55,7 @@ public class Task {
         this.state = state;
         this.dueDate = dueDate;
         this.unique_File_ID = "";
+        this.cityName = "";
     }
 
     @Ignore
@@ -63,6 +66,18 @@ public class Task {
         this.state = state;
         this.dueDate = dueDate;
         this.unique_File_ID = uniqueID;
+        this.cityName = "";
+    }
+
+    @Ignore
+    public Task(String title, String body, TaskState state, int dueDate, String uniqueID, String cityName)
+    {
+        this.title = title;
+        this.body = body;
+        this.state = state;
+        this.dueDate = dueDate;
+        this.unique_File_ID = uniqueID;
+        this.cityName = cityName;
     }
 
     @Ignore
@@ -73,6 +88,7 @@ public class Task {
         this.body = item.body();
         this.state = TaskStateChange.newState(item.state().ordinal());
         this.unique_File_ID = item.unique_File_ID();
+        this.cityName = item.cityName();
     }
 
     public Task(){}
@@ -132,4 +148,13 @@ public class Task {
     public void setUnique_File_ID(String unique_File_ID) {
         this.unique_File_ID = unique_File_ID;
     }
+
+    public String getCityName() {
+        return cityName;
+    }
+
+    public void setCityName(String cityName) {
+        this.cityName = cityName;
+    }
+
 }
