@@ -208,7 +208,7 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
 
     private FusedLocationProviderClient fusedLocationClient;
     String cityName = " ";
-    String stateName = " ";
+    //String stateName = " ";
     LinearLayout coordinatorLayout;
 
 
@@ -850,8 +850,8 @@ public class MainActivity extends AppCompatActivity implements OnListFragmentInt
                         List<Address> addresses;
                         try {
                             addresses = geocoder.getFromLocation(latitude, longitude, 1);
-                            cityName = addresses.get(0).getAddressLine(0);
-                            stateName = addresses.get(0).getAddressLine(1);
+                            cityName = addresses.get(0).getLocality() + ", " +  addresses.get(0).getAdminArea();
+                            //stateName = addresses.get(0).getAddressLine(1);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
