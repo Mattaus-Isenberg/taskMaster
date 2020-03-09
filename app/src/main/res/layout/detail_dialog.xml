@@ -73,6 +73,12 @@
 
     </com.google.android.material.chip.ChipGroup>
 
+    <TextView
+        android:id="@+id/detail_Location"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAlignment="center" />
+
     <EditText
         android:id="@+id/detail_Title"
         android:layout_width="match_parent"

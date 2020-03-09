@@ -10,6 +10,7 @@ mutation CreateTask(
     unique_File_ID
     state
     dueDate
+    cityName
   }
 }
 mutation UpdateTask(
@@ -23,6 +24,7 @@ mutation UpdateTask(
     unique_File_ID
     state
     dueDate
+    cityName
   }
 }
 mutation DeleteTask(
@@ -36,5 +38,6 @@ mutation DeleteTask(
     unique_File_ID
     state
     dueDate
+    cityName
   }
 }

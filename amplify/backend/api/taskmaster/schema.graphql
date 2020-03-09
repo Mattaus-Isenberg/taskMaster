@@ -1,10 +1,11 @@
-type Task @model @auth(rules: [{ allow: owner, operations: [update, delete] }]){
+type Task @model{
   id: ID!
   title: String!
   body: String!
   unique_File_ID: String
   state: TaskState!
   dueDate: Int
+  cityName: String
 }
 
 enum TaskState {

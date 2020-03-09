@@ -32,11 +32,11 @@
 
         <TextView
             android:id="@+id/body_Fragment"
-            android:layout_width="wrap_content"
+            android:layout_width="15dp"
             android:layout_height="wrap_content"
             android:layout_margin="@dimen/text_margin"
             android:layout_weight="1"
-            android:textAlignment="center"
+            android:textAlignment="viewEnd"
             android:textAppearance="?attr/textAppearanceListItem" />
 
         <TextView
